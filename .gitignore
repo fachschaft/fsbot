@@ -1,0 +1,10 @@
+# Login credentials for the bot
+bot_config.py
+
+# Python
+**/__pycache__
+
+# VS Code
+.vscode
+.mypy_cache
+venv
