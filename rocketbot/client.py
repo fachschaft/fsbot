@@ -1,6 +1,6 @@
 import asyncio
 import traceback
-from typing import Awaitable, Callable, List, Optional
+from typing import Awaitable, Callable, List, Optional, Union
 
 from ddp_asyncio import DDPClient
 from ddp_asyncio.subscription import Subscription
@@ -164,8 +164,9 @@ class Client:
         response = await self.client.call("sendMessage", {"rid": roomId, "msg": message})
         return m.create(m.Message, response)
 
-    async def update_message(self, message: m.Message) -> None:
-        """Update a message
+    async def update_message(self, message: Union[m.Message, dict]) -> None:
+        """Update a message either by a message object or for partial updates only a
+        dict with the relevant fields (_id is required)
         """
         return await self.client.call("updateMessage", message)
 

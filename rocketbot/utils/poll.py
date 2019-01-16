@@ -25,6 +25,8 @@ class PollManager:
         self.polls[room_id] = poll
 
     async def push_poll(self, room_id: str, msg_id: str) -> None:
+        """Resend an active poll
+        """
         if room_id not in self.polls:
             await self.bot.send_message(room_id, 'No active poll found.')
             return

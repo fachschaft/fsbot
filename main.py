@@ -4,10 +4,11 @@ import rocketbot.bots as bots
 
 try:
     import bot_config as c
-except ModuleNotFoundError as e:
+except ModuleNotFoundError:
     raise Exception('Please provide the login credentials in a bot_config.py') from None
 
 loop = asyncio.get_event_loop()
+
 
 async def go():
     while True:
