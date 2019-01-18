@@ -14,8 +14,7 @@ class CommandBot(b.BaseBot):
     """
     def __init__(self, url, username, password, loop=asyncio.get_event_loop()):
         super().__init__(url, username, password, loop)
-        self._commands: List[c.BaseCommand] = [c.Usage(self), c.Ping(self), c.Poll(self),
-                                               c.Meals(self)]
+        self._commands: List[c.BaseCommand] = [c.Usage(self), c.Ping(self), c.Poll(self)]
 
     async def __aenter__(self):
         await super().__aenter__()

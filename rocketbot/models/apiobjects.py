@@ -23,6 +23,13 @@ def _init_list(_list, ctor):
     return [models.create(ctor, el) for el in _list]
 
 
+# Possible wrapper for dataclasses. Ensures registration with ejson.
+# Creates some problems with mypy
+# def _dataclass_wrapper(cls_):
+#     ejson.REGISTRY[cls_] = _serialize_dataclass
+#     return dataclasses.dataclass(cls_)
+
+
 @dataclasses.dataclass
 class User:
     _id: str
@@ -226,6 +233,7 @@ class Room:
     topic: Optional[str] = None
     customFields: Optional[dict] = None
     muted: Optional[List[str]] = None
+    description: Optional[str] = None
 
     # Flags
     broadcast: Optional[bool] = None
