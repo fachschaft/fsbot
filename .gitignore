@@ -8,3 +8,5 @@ bot_config.py
 .vscode
 .mypy_cache
 venv
+.idea
+bot_config.py
