@@ -9,4 +9,3 @@ bot_config.py
 .mypy_cache
 venv
 .idea
-bot_config.py
