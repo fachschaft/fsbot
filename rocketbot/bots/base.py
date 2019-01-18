@@ -34,12 +34,12 @@ class BaseBot(client.Client):
         # TODO: Use rest api to retrieve missing rooms
         return self._rooms_cache[room_id]
 
-    async def user(self, username: str) -> m.User:
+    async def user(self, username: str) -> m.UserRef:
         if username not in self._users_cache:
             try:
                 user = self.rest_api.users_info(username=username).json()['user']
-                self._users_cache[username] = m.User(_id=user['_id'], username=username, name=user['name'])
+                self._users_cache[username] = m.UserRef(_id=user['_id'], username=username, name=user['name'])
             except Exception:
                 # Retry next time
-                return m.User(_id='id', username=username, name=username)
+                return m.UserRef(_id='id', username=username, name=username)
         return self._users_cache[username]

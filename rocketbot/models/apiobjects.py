@@ -31,13 +31,13 @@ def _init_list(_list, ctor):
 
 
 @dataclasses.dataclass
-class User:
+class UserRef:
     _id: str
     username: str
     name: Optional[str] = None
 
 
-ejson.REGISTRY[User] = _serialize_dataclass
+ejson.REGISTRY[UserRef] = _serialize_dataclass
 
 
 class RoleType(Enum):
@@ -121,12 +121,12 @@ class Message:
     rid: str  # roomid
     msg: str
     ts: models.RcDatetime  # msg creation timestamp (on client))
-    u: User
+    u: UserRef
     t: MessageType = MessageType.STANDARD_MESSAGE
 
     # Optional fields
     editedAt: Optional[models.RcDatetime] = None
-    editedBy: Optional[User] = None
+    editedBy: Optional[UserRef] = None
     # [{'url': 'http://www.spiegel.de/wirtschaft/unternehmen/bierabsatz-steigt-erstmals-seit-jahren-a-1245601.html', 'meta': {'pageTitle': 'Bier: Absatz steigt wegen heißen Sommers erstmals seit Jahren - SPIEGEL ONLINE', 'ogLocale': 'de_DE', 'ogSiteName': 'SPIEGEL ONLINE', 'ogUrl': 'http://www.spiegel.de/wirtschaft/unternehmen/bierabsatz-steigt-erstmals-seit-jahren-a-1245601.html', 'ogType': 'article', 'ogTitle': 'Wegen heißen Sommers: Bierabsatz steigt erstmals seit Jahren - SPIEGEL ONLINE - Wirtschaft', 'ogDescription': 'Jahrelang schwächelte die Nachfrage nach deutschem Bier. Doch in diesem Jahr verkauften die Brauer dank des heißen Sommers wieder etwas mehr.', 'ogImage': 'http://cdn2.spiegel.de/images/image-1198681-860_poster_16x9-hrrg-1198681.jpg', 'twitterImage': 'http://cdn2.spiegel.de/images/image-1198681-860_poster_16x9-hrrg-1198681.jpg', 'description': 'Jahrelang schwächelte die Nachfrage nach deutschem Bier. Doch in diesem Jahr verkauften die Brauer dank des heißen Sommers wieder etwas mehr.'}, 'headers': {'contentType': 'text/html;charset=UTF-8', 'contentLength': '34157'}, 'parsedUrl': {'host': 'www.spiegel.de', 'hash': None, 'pathname': '/wirtschaft/unternehmen/bierabsatz-steigt-erstmals-seit-jahren-a-1245601.html', 'protocol': 'http:', 'port': None, 'query': None, 'search': None, 'hostname': 'www.spiegel.de'}}]
     # [{'url': 'https://www.statistik.uni-freiburg.de/stat/stud', 'meta': {'pageTitle': 'Studierende — Statistik-Web'}, 'headers': {'contentType': 'text/html;charset=utf-8'}, 'parsedUrl': {'host': 'www.statistik.uni-freiburg.de', 'hash': None, 'pathname': '/stat/stud', 'protocol': 'https:', 'port': None, 'query': None, 'search': None, 'hostname': 'www.statistik.uni-freiburg.de'}}]
     # [{'url': 'https://chat.fachschaft.tf/channel/_uni?msg=115737d5-5ad6-485b-8dc7-4ee4fe01b858', 'ignoreParse': True}]
@@ -138,11 +138,11 @@ class Message:
     customFields: Optional[dict] = None
     reactions: Optional[dict] = None  # E.g. {':tada:': {'usernames': ['sm362']}}
     sandstormSessionId: Optional[Any] = None
-    mentions: List[User] = dataclasses.field(default_factory=list)
+    mentions: List[UserRef] = dataclasses.field(default_factory=list)
     channels: List['RoomRef'] = dataclasses.field(default_factory=list)
     role: RoleType = RoleType.NONE
     pinnedAt: Optional[models.RcDatetime] = None
-    pinnedBy: Optional[User] = None
+    pinnedBy: Optional[UserRef] = None
     file: Optional[File] = None
 
     # Flags
@@ -153,11 +153,11 @@ class Message:
     def __post_init__(self) -> None:
         self._updatedAt = models.RcDatetime.from_server(self._updatedAt)
         self.ts = models.RcDatetime.from_server(self.ts)
-        self.u = models.create(User, self.u)
+        self.u = models.create(UserRef, self.u)
         self.editedAt = models.RcDatetime.from_server(self.editedAt)
-        self.editedBy = models.create(User, self.editedBy)
+        self.editedBy = models.create(UserRef, self.editedBy)
         self.pinnedAt = models.RcDatetime.from_server(self.pinnedAt)
-        self.pinnedBy = models.create(User, self.pinnedBy)
+        self.pinnedBy = models.create(UserRef, self.pinnedBy)
         self.file = models.create(File, self.file)
         if isinstance(self.t, str):
             self.t = MessageType(self.t)
@@ -166,8 +166,8 @@ class Message:
 
         # For later use when reactions actually contain user objects
         # if self.reactions is not None:
-        #     self.reactions = {emoji: [User.from_dict(u) for u in users] for emoji, users in self.reactions.items()}
-        self.mentions = _init_list(self.mentions, User)
+        #     self.reactions = {emoji: [UserRef.from_dict(u) for u in users] for emoji, users in self.reactions.items()}
+        self.mentions = _init_list(self.mentions, UserRef)
         self.channels = _init_list(self.channels, RoomRef)
         self.attachments = _init_list(self.attachments, Attachment)
 
@@ -228,7 +228,7 @@ class Room:
     # Optional fields
     name: Optional[str] = None
     fname: Optional[str] = None
-    u: Optional[User] = None  # Room owner
+    u: Optional[UserRef] = None  # Room owner
     lastMessage: Optional[Message] = None
     topic: Optional[str] = None
     customFields: Optional[dict] = None
@@ -246,7 +246,7 @@ class Room:
     def __post_init__(self) -> None:
         self._updatedAt = models.RcDatetime.from_server(self._updatedAt)
         self.t = RoomType(self.t)
-        self.u = models.create(User, self.u)
+        self.u = models.create(UserRef, self.u)
         self.lastMessage = models.create(Message, self.lastMessage)
 
     def to_roomref2(self, is_participant: bool) -> RoomRef2:

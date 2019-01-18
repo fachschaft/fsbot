@@ -23,6 +23,6 @@ class Ping(c.Prefix):
     async def reply_to_pong(self, args: str, message: m.Message) -> bool:
         await self.bot.send_message(
             message.rid,
-            '[Pong](https://en.wikipedia.org/wiki/Pong) is one of the earliest arcade video games. ' +\
-            'It is a table tennis sports game featuring simple two-dimensional graphics...')
+            '[Pong](https://en.wikipedia.org/wiki/Pong) is one of the earliest arcade video games. '
+            + 'It is a table tennis sports game featuring simple two-dimensional graphics...')
         return True

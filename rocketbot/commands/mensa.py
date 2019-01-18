@@ -47,7 +47,7 @@ class Mensa(c.BaseCommand):
         """Reply with the meals of the day.
 
         Possible extentions:
-        - args = n \in [1..x]  show meals of n futur days
+        - args = n in [1..x]  show meals of n futur days
         - args = 'heute', 'morgen', 'montag', ...
         - after 14:00 -> show meal of next day as default
         - schedule task which sends message with meals every day at 9/10(?)
