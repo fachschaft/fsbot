@@ -33,8 +33,8 @@ def _init_list(_list, ctor):
 @dataclasses.dataclass
 class UserRef:
     _id: str
-    username: str
-    name: Optional[str] = None
+    username: str  # Unique name (@...)
+    name: Optional[str] = None  # Display name
 
 
 ejson.REGISTRY[UserRef] = _serialize_dataclass

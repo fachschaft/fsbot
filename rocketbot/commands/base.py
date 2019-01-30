@@ -1,27 +1,21 @@
 import abc  # Abstract Base Class
 
-import rocketbot.bots as b
 import rocketbot.models as m
 
 
 class BaseCommand(abc.ABC):
-    def __init__(self, bot: 'b.BaseBot'):
-        self.bot = bot
-
     @abc.abstractmethod
     def usage(self) -> str:
         pass
 
     @abc.abstractmethod
-    def is_applicable(self, room: m.RoomRef2) -> bool:
-        """Check whether the command is applicable for the room.
+    def can_handle(self, command: str) -> bool:
+        """Check whether the command is applicable
         """
         pass
 
     @abc.abstractmethod
-    async def handle(self, message: m.Message) -> bool:
+    async def handle(self, command: str, args: str, message: m.Message) -> None:
         """Handle the incoming message
-
-        The return value should indicate if the command recognized the command or not
         """
         pass

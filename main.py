@@ -1,6 +1,8 @@
 import asyncio
 
 import rocketbot.bots as bots
+import rocketbot.commands as com
+import rocketbot.master as master
 
 try:
     import bot_config as c
@@ -12,8 +14,28 @@ loop = asyncio.get_event_loop()
 
 async def go():
     while True:
-        async with bots.FsBot(c.SERVER, c.BOTNAME, c.PASSWORD, c.MENSA_ROOM, loop) as bot:
+        masterbot = master.Master(c.SERVER, c.BOTNAME, c.PASSWORD, loop)
+
+        commands = [com.Ping(masterbot), com.Poll(masterbot)]
+
+        # Public command bot
+        masterbot.bots.append(
+            bots.RoomTypeMentionCommandBot(
+                master=masterbot, username=c.BOTNAME, commands=commands,
+                enable_public_channel=True, enable_private_groups=True))
+        # Direct message bot
+        masterbot.bots.append(
+            bots.RoomTypeCommandBot(
+                master=masterbot, username=c.BOTNAME, commands=commands,
+                enable_direct_message=True))
+        # Mensa bot
+        masterbot.bots.append(
+            bots.RoomCommandBot(
+                master=masterbot, username=c.BOTNAME, rooms=['testroom'], commands=[com.Mensa(masterbot)]
+            ))
+
+        async with masterbot:
             print(f'{c.BOTNAME} is ready')
-            await bot.disconnection()
+            await masterbot.client.disconnection()
 
 loop.run_until_complete(go())

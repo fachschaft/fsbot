@@ -1,47 +1,25 @@
-import rocketbot.bots as b
 import rocketbot.commands as c
+import rocketbot.master as master
 import rocketbot.models as m
 import rocketbot.utils.meals as meals
 
 
 class Mensa(c.BaseCommand):
-    def __init__(self, bot: b.BaseBot, room_name: str):
-        self.bot = bot
-        self.room_name = room_name
-
-    def is_applicable(self, room: m.RoomRef2) -> bool:
-        if room.roomName and room.roomName == self.room_name:
-            return True
-        return False
+    def __init__(self, master: master.Master):
+        self.master = master
 
     def usage(self) -> str:
         return 'essen | food\n     - Show meals of the day\n'
 
-    async def handle(self, message: m.Message) -> bool:
-        """Only receives messages of typ '@bot commmand ...'
-        This is not useful for this command
+    def can_handle(self, command: str) -> bool:
+        """Check whether the command is applicable
         """
-        return False
+        return command in ['essen', 'food']
 
-    async def activate(self) -> None:
-        """Activate commands by subscribing the following callback to mensa messages
+    async def handle(self, command: str, args: str, message: m.Message) -> None:
+        """Handle the incoming message
         """
-        async def callback(result: m.SubscriptionResult):
-            # Ignore own messages
-            if result.message.u.username == self.bot.username:
-                return
-
-            command = result.message.msg.split()[0].lower()
-            args = result.message.msg[len(command):].lstrip()
-
-            if command == 'essen' or command == 'food':
-                return await self.food_command(args, result.message)
-
-            if command.startswith('et'):
-                return await self.etx_command(command, args, result.message)
-
-        rid = [r._id for r in self.bot._rooms_cache.values() if r.name == self.room_name][0]
-        await self.bot.subscribe_room(rid, callback)
+        await self.food_command(args, message)
 
     async def food_command(self, args: str, msg: m.Message):
         """Reply with the meals of the day.
@@ -52,8 +30,11 @@ class Mensa(c.BaseCommand):
         - after 14:00 -> show meal of next day as default
         - schedule task which sends message with meals every day at 9/10(?)
         """
-        foodmsg = await meals.get_food(args)
-        await self.bot.send_message(msg.rid, foodmsg)
+        try:
+            foodmsg = await meals.get_food(int(args))
+        except ValueError:
+            foodmsg = await meals.get_food()
+        await self.master.client.send_message(msg.rid, foodmsg)
 
     async def etx_command(self, etx: str, args: str, msg: m.Message):
         """To be implemented
