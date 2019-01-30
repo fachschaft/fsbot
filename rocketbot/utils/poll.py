@@ -2,83 +2,107 @@ import dataclasses
 from typing import Dict, Optional, List, Set
 
 import rocketbot.bots as bots
-import rocketbot.master as master
 import rocketbot.models as m
+from rocketbot.master import Master
 
 
-class PollManager:
-    """Responsible for polls. Subscribes to rooms, handles active pools, etc.
+@dataclasses.dataclass
+class PollManagerState:
+    master: Master
+    roomBot: bots.RoomCustomBot
+    polls: Dict[str, 'Poll']
+    botname: str
+
+
+_state: Optional[PollManagerState] = None
+
+
+def init(master: Master, botname: str):
+    global _state
+    roomBot = bots.RoomCustomBot(master=master, rooms=[], callback=_poll_callback)
+    master.bots.append(roomBot)
+
+    _state = PollManagerState(master=master, roomBot=roomBot, polls={}, botname=botname)
+
+
+async def create(room_id: str, msg_id: str, title: str, options: List[str]) -> None:
+    global _state
+    if not _state:
+        raise Exception('Call init_pollmanager first')
+
+    poll = Poll(msg_id, title, options)
+
+    msg = await poll.to_message(_state.master, _state.botname)
+    poll_msg = await _state.master.client.send_message(room_id, msg)
+    await _add_reactions(_state.master, poll_msg._id, len(options))
+    poll.poll_msg = poll_msg
+
+    room = await _state.master.room(room_id)
+    if room.name is not None:
+        _state.roomBot.rooms.add(room.name)
+
+    _state.polls[room_id] = poll
+
+
+async def push(room_id: str, msg_id: str) -> None:
+    """Resend an active poll
     """
-    def __init__(self, master: master.Master):
-        self.polls: Dict[str, Poll] = {}
-        self.master = master
-        self.roomBot = bots.RoomCustomBot(master=master, rooms=[], callback=self.poll_callback)
+    global _state
+    if not _state:
+        raise Exception('Call init_pollmanager first')
 
-        self.master.bots.append(self.roomBot)
+    if room_id not in _state.polls:
+        await _state.master.client.send_message(room_id, 'No active poll found.')
+        return
 
-    async def new_poll(self, room_id: str, msg_id: str, title: str, options: List[str]) -> None:
-        poll = Poll(msg_id, title, options)
+    poll = _state.polls[room_id]
+    poll.original_msg_id = msg_id
+    poll.prev_reactions = dict()
 
-        msg = await poll.to_message(self.master)
-        poll_msg = await self.master.client.send_message(room_id, msg)
-        await self.add_reactions(poll_msg._id, len(options))
-        poll.poll_msg = poll_msg
+    msg = await poll.to_message(_state.master, _state.botname)
+    poll_msg = await _state.master.client.send_message(room_id, msg)
+    await _add_reactions(_state.master, poll_msg._id, len(poll.options))
 
-        room = await self.master.room(room_id)
-        if room.name is not None:
-            self.roomBot.rooms.add(room.name)
+    # Set message after add_reactions so that the callback does not interrupt
+    # Results in reactions being lost
+    poll.poll_msg = poll_msg
 
-        self.polls[room_id] = poll
 
-    async def push_poll(self, room_id: str, msg_id: str) -> None:
-        """Resend an active poll
-        """
-        if room_id not in self.polls:
-            await self.master.client.send_message(room_id, 'No active poll found.')
-            return
+async def _add_reactions(master, msg_id, num_options) -> None:
+    # Reactions for options
+    for i in range(num_options):
+        await master.client.set_reaction(LETTER_EMOJIS[i], msg_id, True)
 
-        poll = self.polls[room_id]
-        poll.original_msg_id = msg_id
-        poll.prev_reactions = dict()
+    # Reactions for additional people
+    for emoji in NUMBER_EMOJI_TO_VALUE.keys():
+        await master.client.set_reaction(emoji, msg_id, True)
 
-        msg = await poll.to_message(self.master)
-        poll_msg = await self.master.client.send_message(room_id, msg)
-        await self.add_reactions(poll_msg._id, len(poll.options))
 
-        # Set message after add_reactions so that the callback does not interrupt
-        # Results in reactions being lost
-        poll.poll_msg = poll_msg
+async def _poll_callback(message: m.Message) -> None:
+    global _state
+    if not _state:
+        raise Exception('Call init_pollmanager first')
 
-    async def add_reactions(self, msg_id, num_options) -> None:
-        # Reactions for options
-        for i in range(num_options):
-            await self.master.client.set_reaction(LETTER_EMOJIS[i], msg_id, True)
+    poll = _state.polls[message.rid]
 
-        # Reactions for additional people
-        for emoji in NUMBER_EMOJI_TO_VALUE.keys():
-            await self.master.client.set_reaction(emoji, msg_id, True)
+    msg_id = message._id
+    if msg_id == poll.original_msg_id:
+        if message.msg:
+            # TODO: update poll
+            pass
+        else:
+            del _state.polls[message.rid]
 
-    async def poll_callback(self, message: m.Message) -> None:
-        poll = self.polls[message.rid]
+            room = await _state.master.room(message.rid)
+            if room.name:
+                _state.roomBot.rooms.discard(room.name)
 
-        msg_id = message._id
-        if msg_id == poll.original_msg_id:
-            if message.msg:
-                # TODO: update poll
-                pass
-            else:
-                del self.polls[message.rid]
-
-                room = await self.master.room(message.rid)
-                if room.name:
-                    self.roomBot.rooms.discard(room.name)
-
-                if poll.poll_msg:
-                    await self.master.client.delete_message(poll.poll_msg._id)
-        if poll.poll_msg and msg_id == poll.poll_msg._id:
-            if poll.update(message.reactions):
-                msg = await poll.to_message(self.master)
-                await self.master.client.update_message({'_id': poll.poll_msg._id, 'msg': msg})
+            if poll.poll_msg:
+                await _state.master.client.delete_message(poll.poll_msg._id)
+    if poll.poll_msg and msg_id == poll.poll_msg._id:
+        if poll.update(message.reactions):
+            msg = await poll.to_message(_state.master, _state.botname)
+            await _state.master.client.update_message({'_id': poll.poll_msg._id, 'msg': msg})
 
 
 LETTER_EMOJIS = [
@@ -174,17 +198,17 @@ class Poll:
             return []
         return reactions[key]['usernames']
 
-    async def to_message(self, master: master.Master):
+    async def to_message(self, master: Master, botname: str):
         """Create a message representing the poll
         """
 
         msg = f'*{self.title}* \n\n'
 
         for option in self.options:
-            users = [(await master.user(u), self._get_number(u)) for u in option.users if u != 'fsbot']
+            users = [(await master.user(u), self._get_number(u)) for u in option.users if u != botname]
             users_list = ", ".join((f'{u.name}[{val}]' for u, val in users))
             number = sum([val for _, val in users])
-            msg += f'*{option.emoji} {option.text} [{number}]* \n\n {users_list} \n\n '
+            msg += f'*{option.emoji} {option.text} [{number}]* \n {users_list} \n\n '
 
         return msg
 

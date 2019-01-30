@@ -4,14 +4,14 @@ import shlex
 import rocketbot.commands as c
 import rocketbot.master as master
 import rocketbot.models as m
-import rocketbot.utils.poll as p
+import rocketbot.utils.poll as poll
 
 
 class Poll(c.BaseCommand):
-    def __init__(self, master: master.Master):
+    def __init__(self, master: master.Master, botname: str):
         self.master = master
 
-        self.poll_manager = p.PollManager(master)
+        poll.init(master, botname)
 
     def usage(self) -> str:
         return 'poll <poll_title> <option_1> .. <option_10>\n     - Create a poll\n' +\
@@ -28,7 +28,7 @@ class Poll(c.BaseCommand):
         if command == 'poll':
             await self.create_poll(args, message)
         if command == 'poll_push':
-            await self.push_poll(args, message)
+            await poll.push(message.rid, message._id)
 
     async def create_poll(self, args: str, message: m.Message) -> None:
         if message.editedBy:
@@ -40,13 +40,9 @@ class Poll(c.BaseCommand):
         if len(args_list) > 1:
             if len(args_list) > 11:
                 args_list = args_list[:11]
-            await self.poll_manager.new_poll(message.rid, message._id, args_list[0], args_list[1:])
+            await poll.create(message.rid, message._id, args_list[0], args_list[1:])
         else:
             await self.master.client.send_message(message.rid, f'*Usage:*\n```{self.usage()}```')
-
-    async def push_poll(self, args: str, message: m.Message) -> bool:
-        await self.poll_manager.push_poll(message.rid, message._id)
-        return True
 
     pattern = re.compile(r'(„|“|\'|„|“|”|‘|’)')
 

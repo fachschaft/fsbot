@@ -16,7 +16,7 @@ async def go():
     while True:
         masterbot = master.Master(c.SERVER, c.BOTNAME, c.PASSWORD, loop)
 
-        commands = [com.Ping(masterbot), com.Poll(masterbot)]
+        commands = [com.Ping(masterbot), com.Poll(masterbot, c.BOTNAME)]
 
         # Public command bot
         masterbot.bots.append(
@@ -31,7 +31,9 @@ async def go():
         # Mensa bot
         masterbot.bots.append(
             bots.RoomCommandBot(
-                master=masterbot, username=c.BOTNAME, rooms=[c.MENSA_ROOM], commands=[com.Mensa(masterbot)]
+                master=masterbot, username=c.BOTNAME,
+                rooms=[c.MENSA_ROOM], commands=[com.Mensa(masterbot)],
+                show_usage_on_unknown=False
             ))
 
         async with masterbot:

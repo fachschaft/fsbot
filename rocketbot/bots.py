@@ -57,6 +57,7 @@ class PrefixCommandMixin(BaseBot):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._commands = _init_value(PrefixCommandMixin, kwargs, 'commands')
+        self._show_usage_on_unknown = _init_value(PrefixCommandMixin, kwargs, 'show_usage_on_unknown', default=True)
 
     async def handle(self, message: m.Message):
         command = message.msg.split()[0].lower()
@@ -66,7 +67,8 @@ class PrefixCommandMixin(BaseBot):
             if com.can_handle(command):
                 await com.handle(command, args, message)
                 return
-        await self.master.client.send_message(message.rid, 'Unknown command. Type "usage" for help')
+        if self._show_usage_on_unknown:
+            await self.master.client.send_message(message.rid, 'Unknown command. Type "usage" for help')
 
 
 class CustomHandlerMixin(BaseBot):
