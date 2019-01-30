@@ -2,6 +2,7 @@ import rocketbot.commands as c
 import rocketbot.master as master
 import rocketbot.models as m
 import rocketbot.utils.meals as meals
+import rocketbot.utils.poll as poll
 
 
 class Mensa(c.BaseCommand):
@@ -14,12 +15,16 @@ class Mensa(c.BaseCommand):
     def can_handle(self, command: str) -> bool:
         """Check whether the command is applicable
         """
-        return command in ['essen', 'food']
+        return command in ['essen', 'food', 'etm']
 
     async def handle(self, command: str, args: str, message: m.Message) -> None:
         """Handle the incoming message
         """
-        await self.food_command(args, message)
+        if command in ['essen', 'food']:
+            await self.food_command(args, message)
+        if command == 'etm':
+            await self.food_command("", message)
+            await poll.create(message.rid, message._id, command, args.split())
 
     async def food_command(self, args: str, msg: m.Message):
         """Reply with the meals of the day.
