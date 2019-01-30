@@ -31,7 +31,7 @@ async def go():
         # Mensa bot
         masterbot.bots.append(
             bots.RoomCommandBot(
-                master=masterbot, username=c.BOTNAME, rooms=['testroom'], commands=[com.Mensa(masterbot)]
+                master=masterbot, username=c.BOTNAME, rooms=[c.MENSA_ROOM], commands=[com.Mensa(masterbot)]
             ))
 
         async with masterbot:
