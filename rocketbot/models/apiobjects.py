@@ -234,6 +234,10 @@ class Room:
     customFields: Optional[dict] = None
     muted: Optional[List[str]] = None
     description: Optional[str] = None
+    msgs: Optional[int] = None  # Number of msgs
+    usersCount: Optional[int] = None
+    ts: Optional[models.RcDatetime] = None  # Creation timestamp
+    lm: Optional[models.RcDatetime] = None  # Timestamp of last message
 
     # Flags
     broadcast: Optional[bool] = None
@@ -245,6 +249,8 @@ class Room:
 
     def __post_init__(self) -> None:
         self._updatedAt = models.RcDatetime.from_server(self._updatedAt)
+        self.ts = models.RcDatetime.from_server(self.ts)
+        self.lm = models.RcDatetime.from_server(self.lm)
         self.t = RoomType(self.t)
         self.u = models.create(UserRef, self.u)
         self.lastMessage = models.create(Message, self.lastMessage)

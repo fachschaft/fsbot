@@ -24,10 +24,6 @@ class Master:
         await self.client.connect()
         await self.client.login(self._username, self._password)
 
-        # TODO: Temp, should be offloaded and retrieved by rest api
-        rooms = await self.client.get_all_rooms()
-        self._rooms_cache = {r._id: r for r in rooms}
-
         await self.enable_bots()
 
         return self
@@ -37,7 +33,12 @@ class Master:
         self.client.disconnect()
 
     async def room(self, room_id: str) -> m.Room:
-        # TODO: Use rest api to retrieve missing rooms
+        while room_id not in self._rooms_cache:
+            try:
+                room = self.rest_api.channels_info(room_id=room_id).json()['channel']
+                self._rooms_cache[room_id] = m.create(m.Room, room)
+            except Exception:
+                await asyncio.sleep(1)
         return self._rooms_cache[room_id]
 
     async def user(self, username: str) -> m.UserRef:
