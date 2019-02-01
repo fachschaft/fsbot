@@ -31,9 +31,6 @@ class Poll(c.BaseCommand):
             await poll.push(message.rid, message._id)
 
     async def create_poll(self, args: str, message: m.Message) -> None:
-        if message.editedBy:
-            # An edited message is handled by the poll directly
-            return
         args_list = shlex.split(self.replace_quotes(args))
         args_list = list(filter(None, args_list))
 

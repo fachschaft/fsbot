@@ -87,10 +87,7 @@ async def _poll_callback(message: m.Message) -> None:
 
     msg_id = message._id
     if msg_id == poll.original_msg_id:
-        if message.msg:
-            # TODO: update poll
-            pass
-        else:
+        if not message.msg:
             del _state.polls[message.rid]
 
             room = await _state.master.room(message.rid)
