@@ -1,5 +1,6 @@
 import abc  # Abstract Base Class
 import copy
+from typing import List
 
 import rocketbot.master as master
 import rocketbot.models as m
@@ -17,11 +18,15 @@ class BaseBot(abc.ABC):
     def __init__(self, *, master: master.Master, **kwargs):
         self.master = master
 
-    @abc.abstractmethod
     def is_applicable(self, room: m.RoomRef2) -> bool:
         """Check whether the bot is applicable for the room.
         """
         return True
+
+    def usage(self) -> List[str]:
+        """Usage text for this bot
+        """
+        return []
 
     @abc.abstractmethod
     async def handle(self, message: m.Message) -> None:
@@ -45,6 +50,9 @@ class MentionMixin(BaseBot):
         super().__init__(**kwargs)
         self.username: str = _init_value(MentionMixin, kwargs, 'username')
 
+    def usage(self) -> List[str]:
+        return [f'@{self.username} {l}' for l in super().usage()]
+
     async def handle(self, message: m.Message) -> None:
         msg = message.msg.lstrip()
         if msg.startswith(self.username) or msg.startswith(f'@{self.username}'):
@@ -58,6 +66,12 @@ class PrefixCommandMixin(BaseBot):
         super().__init__(**kwargs)
         self._commands = _init_value(PrefixCommandMixin, kwargs, 'commands')
         self._show_usage_on_unknown = _init_value(PrefixCommandMixin, kwargs, 'show_usage_on_unknown', default=True)
+
+    def usage(self) -> List[str]:
+        res: List[str] = []
+        for c in self._commands:
+            res.extend(c.usage())
+        return res
 
     async def handle(self, message: m.Message):
         if not message.msg:

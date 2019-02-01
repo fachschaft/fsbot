@@ -1,11 +1,12 @@
 import abc  # Abstract Base Class
+from typing import List
 
 import rocketbot.models as m
 
 
 class BaseCommand(abc.ABC):
     @abc.abstractmethod
-    def usage(self) -> str:
+    def usage(self) -> List[str]:
         pass
 
     @abc.abstractmethod

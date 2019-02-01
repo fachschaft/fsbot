@@ -1,5 +1,6 @@
 import re
 import shlex
+from typing import List
 
 import rocketbot.commands as c
 import rocketbot.master as master
@@ -13,9 +14,11 @@ class Poll(c.BaseCommand):
 
         poll.init(master, botname)
 
-    def usage(self) -> str:
-        return 'poll <poll_title> <option_1> .. <option_10>\n     - Create a poll\n' +\
-            'poll_push\n     - Resend the poll message'
+    def usage(self) -> List[str]:
+        return [
+            'poll <poll_title> <option_1> .. <option_10>  - Create a poll',
+            'poll_push     - Resend the poll message',
+        ]
 
     def can_handle(self, command: str) -> bool:
         """Check whether the command is applicable

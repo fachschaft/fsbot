@@ -1,3 +1,5 @@
+from typing import List
+
 import rocketbot.commands as c
 import rocketbot.master as master
 import rocketbot.models as m
@@ -9,8 +11,11 @@ class Mensa(c.BaseCommand):
     def __init__(self, master: master.Master):
         self.master = master
 
-    def usage(self) -> str:
-        return 'essen | food\n     - Show meals of the day\n'
+    def usage(self) -> List[str]:
+        return [
+            'essen | food     - Show meals of the day',
+            'etm [<option_1> ... <option_10]    - Shows meal of the day and creates a poll with the given options (default = 11:30)',
+        ]
 
     def can_handle(self, command: str) -> bool:
         """Check whether the command is applicable

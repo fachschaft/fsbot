@@ -21,7 +21,7 @@ async def go():
         # Public command bot
         masterbot.bots.append(
             bots.RoomTypeMentionCommandBot(
-                master=masterbot, username=c.BOTNAME, commands=commands,
+                master=masterbot, username=c.BOTNAME, commands=[com.Usage(masterbot), *commands],
                 enable_public_channel=True, enable_private_groups=True))
         # Direct message bot
         masterbot.bots.append(
