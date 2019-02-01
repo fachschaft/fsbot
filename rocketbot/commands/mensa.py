@@ -24,7 +24,10 @@ class Mensa(c.BaseCommand):
             await self.food_command(args, message)
         if command == 'etm':
             await self.food_command("", message)
-            await poll.create(message.rid, message._id, command, args.split())
+            poll_options = args.split()
+            if len(poll_options) == 0:
+                poll_options.append('11:30')
+            await poll.create(message.rid, message._id, command, poll_options)
 
     async def food_command(self, args: str, msg: m.Message):
         """Reply with the meals of the day.
