@@ -60,6 +60,8 @@ class PrefixCommandMixin(BaseBot):
         self._show_usage_on_unknown = _init_value(PrefixCommandMixin, kwargs, 'show_usage_on_unknown', default=True)
 
     async def handle(self, message: m.Message):
+        if not message.msg:
+            return
         command = message.msg.split()[0].lower()
         args = message.msg[len(command):].lstrip()
 
