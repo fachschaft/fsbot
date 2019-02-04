@@ -16,12 +16,12 @@ async def go():
     while True:
         masterbot = master.Master(c.SERVER, c.BOTNAME, c.PASSWORD, loop)
 
-        commands = [com.Ping(masterbot), com.Poll(masterbot, c.BOTNAME)]
+        commands = [com.Usage(masterbot), com.Ping(masterbot), com.Poll(masterbot, c.BOTNAME)]
 
         # Public command bot
         masterbot.bots.append(
             bots.RoomTypeMentionCommandBot(
-                master=masterbot, username=c.BOTNAME, commands=[com.Usage(masterbot), *commands],
+                master=masterbot, username=c.BOTNAME, commands=commands,
                 enable_public_channel=True, enable_private_groups=True))
         # Direct message bot
         masterbot.bots.append(

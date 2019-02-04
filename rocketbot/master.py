@@ -7,6 +7,7 @@ from rocketchat_API.APIExceptions.RocketExceptions import RocketConnectionExcept
 
 import rocketbot.bots as b
 import rocketbot.client as client
+import rocketbot.exception as exp
 import rocketbot.models as m
 
 
@@ -36,14 +37,14 @@ class Master:
     async def room(self, room_id: str) -> m.Room:
         while room_id not in self._rooms_cache:
             try:
-                result = self.rest_api.channels_info(room_id=room_id).json()
-                if 'channel' in result:
-                    self._rooms_cache[room_id] = m.create(m.Room, result['channel'])
+                result = self.rest_api.rooms_info(room_id=room_id).json()
+                if 'room' in result:
+                    self._rooms_cache[room_id] = m.create(m.Room, result['room'])
                 else:
-                    raise client.RocketClientException(result)
-            except RocketConnectionException:
-                raise
-                # await asyncio.sleep(1)
+                    result['roomId'] = room_id
+                    raise exp.RocketBotException(result)
+            except RocketConnectionException as e:
+                raise exp.RocketClientException(e)
         return self._rooms_cache[room_id]
 
     async def user(self, username: str) -> m.UserRef:

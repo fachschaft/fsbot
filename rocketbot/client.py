@@ -5,15 +5,8 @@ from typing import Awaitable, Callable, List, Optional, Union
 from ddp_asyncio import DDPClient
 from ddp_asyncio.subscription import Subscription
 
+import rocketbot.exception as exp
 import rocketbot.models as m
-
-
-class RocketClientException(Exception):
-    pass
-
-
-class RocketCancelSubscription(Exception):
-    pass
 
 
 async def _subscription_cb_wrapper(col_q: asyncio.Queue, event_name: str, callback: Callable[[m.SubscriptionResult], Awaitable]):
@@ -26,7 +19,7 @@ async def _subscription_cb_wrapper(col_q: asyncio.Queue, event_name: str, callba
                 result = m.SubscriptionResult(**event['fields'])
                 if event_name == result.eventName:
                     await callback(result)
-        except RocketCancelSubscription:
+        except exp.RocketCancelSubscription:
             break
         except Exception:
             traceback.print_exc()
@@ -130,7 +123,7 @@ class Client:
             "loadHistory", room_id, from_, num_msgs, until)
         if isinstance(response, dict):
             return m.LoadHistoryResult(**response)
-        raise RocketClientException("Cannot access room")
+        raise exp.RocketClientException("Cannot access room")
 
     # async def getRoomRoles(self, *room_ids):
     #     """This method call is used to get room-wide special users and their

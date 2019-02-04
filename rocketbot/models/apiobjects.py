@@ -238,6 +238,7 @@ class Room:
     usersCount: Optional[int] = None
     ts: Optional[models.RcDatetime] = None  # Creation timestamp
     lm: Optional[models.RcDatetime] = None  # Timestamp of last message
+    usernames: Optional[List[str]] = None
 
     # Flags
     broadcast: Optional[bool] = None
