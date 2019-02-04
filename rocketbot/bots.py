@@ -4,6 +4,7 @@ from typing import List
 
 import rocketbot.master as master
 import rocketbot.models as m
+import rocketbot.utils.usage as usage
 
 
 def _init_value(cls, kwargs, key, default=None):
@@ -84,7 +85,11 @@ class PrefixCommandMixin(BaseBot):
                 await com.handle(command, args, message)
                 return
         if self._show_usage_on_unknown:
-            await self.master.client.send_message(message.rid, 'Unknown command. Type "usage" for help')
+            room = await self.master.room(message.rid)
+            roomref = room.to_roomref2(True)
+
+            msg = await usage.get_message(self.master, roomref)
+            await self.master.client.send_message(message.rid, msg)
 
 
 class CustomHandlerMixin(BaseBot):
