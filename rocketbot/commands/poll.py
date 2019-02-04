@@ -1,6 +1,6 @@
 import re
 import shlex
-from typing import List
+from typing import List, Tuple
 
 import rocketbot.commands as c
 import rocketbot.master as master
@@ -14,10 +14,10 @@ class Poll(c.BaseCommand):
 
         poll.init(master, botname)
 
-    def usage(self) -> List[str]:
+    def usage(self) -> List[Tuple[str, str]]:
         return [
-            'poll <poll_title> <option_1> .. <option_10>  - Create a poll',
-            'poll_push     - Resend the poll message',
+            ('poll <poll_title> <option_1> .. <option_10>', 'Create a poll'),
+            ('poll_push', 'Resend the poll message'),
         ]
 
     def can_handle(self, command: str) -> bool:

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import rocketbot.commands as c
 import rocketbot.master as master
@@ -11,10 +11,10 @@ class Mensa(c.BaseCommand):
     def __init__(self, master: master.Master):
         self.master = master
 
-    def usage(self) -> List[str]:
+    def usage(self) -> List[Tuple[str, str]]:
         return [
-            'essen | food     - Show meals of the day',
-            'etm [<option_1> ... <option_10]    - Shows meal of the day and creates a poll with the given options (default = 11:30)',
+            ('essen | food', 'Show meals of the day'),
+            ('etm [<option_1> ... <option_10]', 'Shows meal of the day and creates a poll with the given options (default = 11:30)'),
         ]
 
     def can_handle(self, command: str) -> bool:

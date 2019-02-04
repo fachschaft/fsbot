@@ -1,6 +1,6 @@
 import abc  # Abstract Base Class
 import copy
-from typing import List
+from typing import List, Tuple
 
 import rocketbot.master as master
 import rocketbot.models as m
@@ -24,7 +24,7 @@ class BaseBot(abc.ABC):
         """
         return True
 
-    def usage(self) -> List[str]:
+    def usage(self) -> List[Tuple[str, str]]:
         """Usage text for this bot
         """
         return []
@@ -51,8 +51,8 @@ class MentionMixin(BaseBot):
         super().__init__(**kwargs)
         self.username: str = _init_value(MentionMixin, kwargs, 'username')
 
-    def usage(self) -> List[str]:
-        return [f'@{self.username} {l}' for l in super().usage()]
+    def usage(self) -> List[Tuple[str, str]]:
+        return [(f'@{self.username} {command}', desc) for command, desc in super().usage()]
 
     async def handle(self, message: m.Message) -> None:
         msg = message.msg.lstrip()
@@ -68,8 +68,8 @@ class PrefixCommandMixin(BaseBot):
         self._commands = _init_value(PrefixCommandMixin, kwargs, 'commands')
         self._show_usage_on_unknown = _init_value(PrefixCommandMixin, kwargs, 'show_usage_on_unknown', default=True)
 
-    def usage(self) -> List[str]:
-        res: List[str] = []
+    def usage(self) -> List[Tuple[str, str]]:
+        res: List[Tuple[str, str]] = []
         for c in self._commands:
             res.extend(c.usage())
         return res

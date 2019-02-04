@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import rocketbot.commands as c
 import rocketbot.master as master
@@ -10,8 +10,8 @@ class Usage(c.BaseCommand):
     def __init__(self, master: master.Master):
         self.master = master
 
-    def usage(self) -> List[str]:
-        return ['help | usage | ?     - Print all available commands']
+    def usage(self) -> List[Tuple[str, str]]:
+        return [('help | usage | ?', 'Print all available commands')]
 
     def can_handle(self, command: str) -> bool:
         """Check whether the command is applicable
