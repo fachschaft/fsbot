@@ -40,6 +40,9 @@ class RcDatetime:
         millis = value['$date']
         return RcDatetime(_millis_to_datetime(millis, _server_tz))
 
+    def is_today(self) -> bool:
+        return datetime.datetime.today().date() == self.value.date()
+
 
 @ejson.register_serializer(RcDatetime)
 def _serialize_rcdatetime(instance) -> dict:

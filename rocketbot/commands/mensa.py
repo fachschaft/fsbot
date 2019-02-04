@@ -14,25 +14,34 @@ class Mensa(c.BaseCommand):
     def usage(self) -> List[Tuple[str, str]]:
         return [
             ('essen | food', 'Show meals of the day'),
-            ('etm [<option_1> ... <option_10]', 'Shows meal of the day and creates a poll with the given options (default = 11:30)'),
+            ('etm | etlm [<poll_option>...]', 'Shows meal of the day and creates a poll with the given options (default = 11:30) or adds the options to the poll'),
         ]
 
     def can_handle(self, command: str) -> bool:
         """Check whether the command is applicable
         """
-        return command in ['essen', 'food', 'etm']
+        return command in ['essen', 'food', 'etm', 'etlm']
 
     async def handle(self, command: str, args: str, message: m.Message) -> None:
         """Handle the incoming message
         """
         if command in ['essen', 'food']:
             await self.food_command(args, message)
-        if command == 'etm':
-            await self.food_command("", message)
+        if command in ['etm', 'etlm']:
+            poll_obj = poll.get(message.rid)
             poll_options = args.split()
-            if len(poll_options) == 0:
-                poll_options.append('11:30')
-            await poll.create(message.rid, message._id, command, poll_options)
+
+            if poll_obj and poll_obj.poll_msg and poll_obj.poll_msg.ts.is_today():
+                # If its the same day, add the options to the poll
+                for option_txt in poll_options:
+                    option = await poll_obj.add_option(option_txt)
+                    if option:
+                        await self.master.client.set_reaction(option.emoji, poll_obj.poll_msg._id, True)
+            else:
+                if len(poll_options) == 0:
+                    poll_options.append('11:30')
+                await self.food_command("", message)
+                await poll.create(message.rid, message._id, command, poll_options)
 
     async def food_command(self, args: str, msg: m.Message):
         """Reply with the meals of the day.

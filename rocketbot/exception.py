@@ -15,3 +15,9 @@ class RocketBotException(Exception):
     """General rocketbot exception
     """
     pass
+
+
+class RocketBotPollException(RocketBotException):
+    """Exception for the poll module
+    """
+    pass

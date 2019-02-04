@@ -2,6 +2,7 @@ import dataclasses
 from typing import Dict, Optional, List, Set
 
 import rocketbot.bots as bots
+import rocketbot.exception as exp
 import rocketbot.models as m
 from rocketbot.master import Master
 
@@ -17,6 +18,13 @@ class PollManagerState:
 _state: Optional[PollManagerState] = None
 
 
+def _get_state() -> PollManagerState:
+    global _state
+    if not _state:
+        raise exp.RocketBotPollException('Call init_pollmanager first')
+    return _state
+
+
 def init(master: Master, botname: str):
     global _state
     roomBot = bots.RoomCustomBot(master=master, rooms=[], callback=_poll_callback)
@@ -25,11 +33,15 @@ def init(master: Master, botname: str):
     _state = PollManagerState(master=master, roomBot=roomBot, polls={}, botname=botname)
 
 
-async def create(room_id: str, msg_id: str, title: str, options: List[str]) -> None:
-    global _state
-    if not _state:
-        raise Exception('Call init_pollmanager first')
+def get(room_id: str) -> Optional['Poll']:
+    _state = _get_state()
+    if room_id in _state.polls:
+        return _state.polls[room_id]
+    return None
 
+
+async def create(room_id: str, msg_id: str, title: str, options: List[str]) -> None:
+    _state = _get_state()
     poll = Poll(msg_id, title, options)
 
     msg = await poll.to_message(_state.master, _state.botname)
@@ -47,10 +59,7 @@ async def create(room_id: str, msg_id: str, title: str, options: List[str]) -> N
 async def push(room_id: str, msg_id: str) -> None:
     """Resend an active poll
     """
-    global _state
-    if not _state:
-        raise Exception('Call init_pollmanager first')
-
+    _state = _get_state()
     if room_id not in _state.polls:
         await _state.master.client.send_message(room_id, 'No active poll found.')
         return
@@ -79,10 +88,7 @@ async def _add_reactions(master, msg_id, num_options) -> None:
 
 
 async def _poll_callback(message: m.Message) -> None:
-    global _state
-    if not _state:
-        raise Exception('Call init_pollmanager first')
-
+    _state = _get_state()
     poll = _state.polls[message.rid]
 
     msg_id = message._id
@@ -216,3 +222,13 @@ class Poll:
         for emoji in self.user_to_numberemojis[user]:
             sum_ += NUMBER_EMOJI_TO_VALUE[emoji]
         return sum_
+
+    async def add_option(self, new_option) -> Optional[PollOption]:
+        if len(self.options) >= len(NUMBER_TO_LETTER_EMOJI):
+            return None
+
+        num = len(self.options)
+        emoji = NUMBER_TO_LETTER_EMOJI[num]
+        option = PollOption(text=new_option, _id=num, emoji=emoji)
+        self.options.append(option)
+        return option
