@@ -1,5 +1,3 @@
-import re
-import shlex
 from typing import List, Tuple
 
 import rocketbot.commands as c
@@ -34,20 +32,10 @@ class Poll(c.BaseCommand):
             await poll.push(message.rid, message._id)
 
     async def create_poll(self, args: str, message: m.Message) -> None:
-        args_list = shlex.split(self.replace_quotes(args))
-        args_list = list(filter(None, args_list))
-
+        args_list = poll.parse_args(args)
         if len(args_list) > 1:
             if len(args_list) > 11:
                 args_list = args_list[:11]
             await poll.create(message.rid, message._id, args_list[0], args_list[1:])
         else:
             await self.master.client.send_message(message.rid, f'*Usage:*\n```{self.usage()}```')
-
-    pattern = re.compile(r'(„|“|\'|„|“|”|‘|’)')
-
-    def replace_quotes(self, string: str) -> str:
-        """Replace all kinds of obscure quotation marks
-        """
-        string = Poll.pattern.sub('"', string)
-        return string

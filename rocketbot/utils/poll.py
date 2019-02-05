@@ -1,4 +1,6 @@
 import dataclasses
+import re
+import shlex
 from typing import Dict, Optional, List, Set
 
 import rocketbot.bots as bots
@@ -106,6 +108,20 @@ async def _poll_callback(message: m.Message) -> None:
         if poll.update(message.reactions):
             msg = await poll.to_message(_state.master, _state.botname)
             await _state.master.client.update_message({'_id': poll.poll_msg._id, 'msg': msg})
+
+
+def parse_args(args: str) -> List[str]:
+    args_list = shlex.split(_replace_quotes(args))
+    return list(filter(None, args_list))
+
+
+_pattern = re.compile(r'(„|“|\'|„|“|”|‘|’)')
+
+
+def _replace_quotes(string: str) -> str:
+    """Replace all kinds of obscure quotation marks
+    """
+    return _pattern.sub('"', string)
 
 
 LETTER_EMOJIS = [

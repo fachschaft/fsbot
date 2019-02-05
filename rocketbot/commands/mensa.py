@@ -29,7 +29,7 @@ class Mensa(c.BaseCommand):
             await self.food_command(args, message)
         if command in ['etm', 'etlm']:
             poll_obj = poll.get(message.rid)
-            poll_options = args.split()
+            poll_options = poll.parse_args(args)
 
             if poll_obj and poll_obj.poll_msg and poll_obj.poll_msg.ts.is_today():
                 # If its the same day, add the options to the poll
