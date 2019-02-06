@@ -34,8 +34,6 @@ class Poll(c.BaseCommand):
     async def create_poll(self, args: str, message: m.Message) -> None:
         args_list = poll.parse_args(args)
         if len(args_list) > 1:
-            if len(args_list) > 11:
-                args_list = args_list[:11]
             await poll.create(message.rid, message._id, args_list[0], args_list[1:])
         else:
             await self.master.client.send_message(message.rid, f'*Usage:*\n```{self.usage()}```')

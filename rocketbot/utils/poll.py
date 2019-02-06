@@ -48,7 +48,7 @@ async def create(room_id: str, msg_id: str, title: str, options: List[str]) -> N
 
     msg = await poll.to_message(_state.master, _state.botname)
     poll_msg = await _state.master.client.send_message(room_id, msg)
-    await _add_reactions(_state.master, poll_msg._id, len(options))
+    await _add_reactions(_state.master, poll_msg, len(poll.options))
     poll.poll_msg = poll_msg
 
     room = await _state.master.room(room_id)
@@ -72,21 +72,26 @@ async def push(room_id: str, msg_id: str) -> None:
 
     msg = await poll.to_message(_state.master, _state.botname)
     poll_msg = await _state.master.client.send_message(room_id, msg)
-    await _add_reactions(_state.master, poll_msg._id, len(poll.options))
+    await _add_reactions(_state.master, poll_msg, len(poll.options))
 
     # Set message after add_reactions so that the callback does not interrupt
     # Results in reactions being lost
     poll.poll_msg = poll_msg
 
 
-async def _add_reactions(master, msg_id, num_options) -> None:
+async def _add_reactions(master, msg, num_options) -> None:
+    reactions = {}
+
     # Reactions for options
     for i in range(num_options):
-        await master.client.set_reaction(LETTER_EMOJIS[i], msg_id, True)
+        reactions[LETTER_EMOJIS[i]] = {'usernames': [msg.u.username]}
+        # await master.client.set_reaction(LETTER_EMOJIS[i], msg_id, True)
 
     # Reactions for additional people
     for emoji in NUMBER_EMOJI_TO_VALUE.keys():
-        await master.client.set_reaction(emoji, msg_id, True)
+        reactions[emoji] = {'usernames': [msg.u.username]}
+        # await master.client.set_reaction(emoji, msg_id, True)
+    await master.client.update_message({'_id': msg._id, 'reactions': reactions})
 
 
 async def _poll_callback(message: m.Message) -> None:
@@ -141,10 +146,10 @@ NUMBER_TO_LETTER_EMOJI = {i: val for i, val in enumerate(LETTER_EMOJIS)}
 LETTER_EMOJI_TO_NUMBER = {val: i for i, val in enumerate(LETTER_EMOJIS)}
 
 NUMBER_EMOJI_TO_VALUE = {
-    ':plus_one:': 1,
-    ':plus_two:': 2,
-    ':plus_three:': 3,
-    ':plus_four:': 4,
+    ':x1:': 1,
+    ':x2:': 2,
+    ':x3:': 3,
+    ':x4:': 4,
 }
 
 VALUE_TO_NUMBER_EMOJI = {val: key for key, val in NUMBER_EMOJI_TO_VALUE.items()}
