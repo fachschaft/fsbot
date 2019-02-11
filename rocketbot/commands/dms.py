@@ -40,11 +40,10 @@ class DMS(c.BaseCommand):
         if command == 'order':
             argv = [command, *argv]
 
-        if command in ('dms', 'drink', 'drinks'):
-            dms_result = subprocess.run(['dms', *argv],
-                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            result_str = dms_result.stdout.decode('utf-8')
-            await self.master.client.send_message(message.rid, result_str)
+        dms_result = subprocess.run(['dms', *argv],
+                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        result_str = dms_result.stdout.decode('utf-8')
+        await self.master.client.send_message(message.rid, result_str)
 
     def _create_dmsclient_config_if_missing(self, token: str):
         rcfile = os.path.expanduser('~/.dmsrc')
