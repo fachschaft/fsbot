@@ -1,5 +1,5 @@
 from typing import List, Tuple
-import subprocess
+import asyncio
 import os
 import re
 
@@ -45,9 +45,12 @@ class DMSClient(c.BaseCommand):
             if '--force' not in argv:
                 argv.append('--force')
 
-        dms_result = subprocess.run(['dms', *argv],
-                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        result_str = dms_result.stdout.decode('utf-8')
+        proc = await asyncio.create_subprocess_exec(
+            'dms', *argv,
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT)
+        dms_result = await proc.stdout.read()
+        result_str = dms_result.decode('utf-8')
+        await proc.wait()
         await self.master.client.send_message(message.rid, result_str)
 
     def _create_dmsclient_config_if_missing(self, token: str):
