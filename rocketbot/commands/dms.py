@@ -18,6 +18,9 @@ class DMSClient(c.BaseCommand):
     def usage(self) -> List[Tuple[str, str]]:
         return [
             ('order', 'Orders product in dms for yourself.'),
+            ('dms', 'Access dms client.'),
+            ('drinks', 'Access dms client.'),
+            ('drink', 'Access dms client.'),
         ]
 
     def can_handle(self, command: str) -> bool:
