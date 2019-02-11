@@ -30,15 +30,17 @@ class DMS(c.BaseCommand):
         """
         argv = re.split(r'\s+', args.strip())
 
-        userargv = [arg for arg in argv if arg.startswith('-u') or arg.startswith('--user')]
-        if len(userargv) == 0:
-            userid = message.u.username
-            argv.append('--user={}'.format(userid))
-        if '--force' not in argv:
-            argv.append('--force')
-
-        if command == 'order':
+        if command in ('order'):
             argv = [command, *argv]
+
+        if argv[0] in ('order', 'buy', 'comment'):
+            userargv = [arg for arg in argv if arg.startswith('-u') or arg.startswith('--user')]
+            if len(userargv) == 0:
+                userid = message.u.username
+                argv.append('--user={}'.format(userid))
+        if argv[0] in ('order', 'buy'):
+            if '--force' not in argv:
+                argv.append('--force')
 
         dms_result = subprocess.run(['dms', *argv],
                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
