@@ -29,7 +29,7 @@ def _get_state() -> PollManagerState:
 
 def init(master: Master, botname: str):
     global _state
-    roomBot = bots.RoomCustomBot(master=master, rooms=[], callback=_poll_callback)
+    roomBot = bots.RoomCustomBot(master=master, whitelist=[], callback=_poll_callback)
     master.bots.append(roomBot)
 
     _state = PollManagerState(master=master, roomBot=roomBot, polls={}, botname=botname)

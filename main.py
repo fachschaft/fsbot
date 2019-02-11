@@ -38,7 +38,7 @@ async def go():
         masterbot.bots.append(
             bots.RoomCommandBot(
                 master=masterbot, username=c.BOTNAME,
-                rooms=[c.MENSA_ROOM], commands=mensa,
+                whitelist=[c.MENSA_ROOM], commands=[mensa],
                 show_usage_on_unknown=False
             ))
 
