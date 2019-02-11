@@ -16,24 +16,29 @@ async def go():
     while True:
         masterbot = master.Master(c.SERVER, c.BOTNAME, c.PASSWORD, loop)
 
-        commands = [com.Usage(masterbot), com.Ping(masterbot), com.Poll(masterbot, c.BOTNAME)]
-        direct_only_commands = [com.DMSClient(masterbot, c.DMS_TOKEN)]
+        usage = com.Usage(master=masterbot)
+        ping = com.Ping(master=masterbot)
+        poll = com.Poll(master=masterbot, botname=c.BOTNAME)
+        dms = com.Dms(master=masterbot, token=c.DMS_TOKEN)
+        mensa = com.Mensa(master=masterbot)
 
         # Public command bot
         masterbot.bots.append(
             bots.RoomTypeMentionCommandBot(
-                master=masterbot, username=c.BOTNAME, commands=commands,
-                enable_public_channel=True, enable_private_groups=True))
+                master=masterbot, username=c.BOTNAME,
+                enable_public_channel=True, enable_private_groups=True,
+                commands=[usage, ping, poll]))
         # Direct message bot
         masterbot.bots.append(
             bots.RoomTypeCommandBot(
-                master=masterbot, username=c.BOTNAME, commands=commands + direct_only_commands,
-                enable_direct_message=True))
+                master=masterbot, username=c.BOTNAME,
+                enable_direct_message=True,
+                commands=[usage, ping, dms]))
         # Mensa bot
         masterbot.bots.append(
             bots.RoomCommandBot(
                 master=masterbot, username=c.BOTNAME,
-                rooms=[c.MENSA_ROOM], commands=[com.Mensa(masterbot)],
+                rooms=[c.MENSA_ROOM], commands=mensa,
                 show_usage_on_unknown=False
             ))
 

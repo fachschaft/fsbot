@@ -2,9 +2,13 @@ import abc  # Abstract Base Class
 from typing import List, Tuple
 
 import rocketbot.models as m
+import rocketbot.master as master
 
 
 class BaseCommand(abc.ABC):
+    def __init__(self, *, master: master.Master):
+        self.master = master
+
     @abc.abstractmethod
     def usage(self) -> List[Tuple[str, str]]:
         pass

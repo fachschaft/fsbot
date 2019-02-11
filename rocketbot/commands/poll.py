@@ -1,16 +1,14 @@
 from typing import List, Tuple
 
 import rocketbot.commands as c
-import rocketbot.master as master
 import rocketbot.models as m
 import rocketbot.utils.poll as poll
 
 
 class Poll(c.BaseCommand):
-    def __init__(self, master: master.Master, botname: str):
-        self.master = master
-
-        poll.init(master, botname)
+    def __init__(self, botname: str, **kwargs):
+        super().__init__(**kwargs)
+        poll.init(self.master, botname)
 
     def usage(self) -> List[Tuple[str, str]]:
         return [

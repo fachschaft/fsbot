@@ -1,15 +1,11 @@
 from typing import List, Tuple
 
 import rocketbot.commands as c
-import rocketbot.master as master
 import rocketbot.models as m
 import rocketbot.utils.usage as usage
 
 
 class Usage(c.BaseCommand):
-    def __init__(self, master: master.Master):
-        self.master = master
-
     def usage(self) -> List[Tuple[str, str]]:
         return [('help | usage | ?', 'Print all available commands')]
 

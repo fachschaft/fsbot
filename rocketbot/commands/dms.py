@@ -6,21 +6,18 @@ import re
 import dmsclient as dms
 
 import rocketbot.commands as c
-import rocketbot.master as master
 import rocketbot.models as m
 
 
-class DMSClient(c.BaseCommand):
-    def __init__(self, master: master.Master, token: str):
+class Dms(c.BaseCommand):
+    def __init__(self, token: str, **kwargs):
+        super().__init__(**kwargs)
         self._create_dmsclient_config_if_missing(token)
-        self.master = master
 
     def usage(self) -> List[Tuple[str, str]]:
         return [
             ('order', 'Orders product in dms for yourself.'),
-            ('dms', 'Access dms client.'),
-            ('drinks', 'Access dms client.'),
-            ('drink', 'Access dms client.'),
+            ('dms | drink | drinks', 'Access dms client.'),
         ]
 
     def can_handle(self, command: str) -> bool:
@@ -48,9 +45,12 @@ class DMSClient(c.BaseCommand):
         proc = await asyncio.create_subprocess_exec(
             'dms', *argv,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT)
-        dms_result = await proc.stdout.read()
-        result_str = dms_result.decode('utf-8')
         await proc.wait()
+        if proc.stdout:
+            dms_result = await proc.stdout.read()
+            result_str = dms_result.decode('utf-8')
+        else:
+            result_str = "Done."
         await self.master.client.send_message(message.rid, result_str)
 
     def _create_dmsclient_config_if_missing(self, token: str):
