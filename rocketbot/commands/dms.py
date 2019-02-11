@@ -33,8 +33,8 @@ class DMSClient(c.BaseCommand):
             dms_result = subprocess.run(['dms', 'order', *args,
                                          '--force', '--user={}'.format(userid)],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            dms_result.stdout.decode('utf-8')
-            await self.master.client.send_message(message.rid, dms_result)
+            result_str = dms_result.stdout.decode('utf-8')
+            await self.master.client.send_message(message.rid, result_str)
 
     def _create_dmsclient_config_if_missing():
         rcfile = os.path.expanduser('~/.dmsrc')
