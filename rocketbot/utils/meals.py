@@ -8,8 +8,8 @@ async def get_food(days=None):
         days = 1
     url = c.MENSA_CACHE_URL + '/' + str(days)
 
-    with urllib.request.urlopen(url) as url:
-        data = json.loads(url.read().decode())
+    with urllib.request.urlopen(url) as url_obj:
+        data = json.loads(url_obj.read().decode())
 
     foodmsg = "```\n"
     for day in data:

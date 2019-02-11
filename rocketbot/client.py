@@ -1,6 +1,6 @@
 import asyncio
 import traceback
-from typing import Awaitable, Callable, List, Optional, Union
+from typing import Awaitable, Callable, List, Optional, Union, Dict
 
 from ddp_asyncio import DDPClient
 from ddp_asyncio.subscription import Subscription
@@ -32,8 +32,8 @@ class Client:
     """
     def __init__(self, address, loop):
         self.client = DDPClient(address)
-        self.tasks = []
-        self.subscriptions = {}
+        self.tasks: List[asyncio.Task] = []
+        self.subscriptions: Dict[str, Subscription] = {}
         self.loop = loop
 
     async def connect(self) -> None:

@@ -1,6 +1,6 @@
 import asyncio
 import re
-from typing import List
+from typing import Dict, List
 
 from rocketchat_API.rocketchat import RocketChat
 from rocketchat_API.APIExceptions.RocketExceptions import RocketConnectionException
@@ -18,8 +18,8 @@ class Master:
         self.rest_api = RocketChat(user=username, password=password, server_url=url)
         self._username = username
         self._password = password
-        self._rooms_cache = {}
-        self._users_cache = {}
+        self._rooms_cache: Dict[str, m.Room] = {}
+        self._users_cache: Dict[str, m.UserRef] = {}
         self.bots: List[b.BaseBot] = []
 
     async def __aenter__(self):

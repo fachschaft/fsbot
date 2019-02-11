@@ -15,8 +15,8 @@ def _datetime_to_millis(dt: datetime.datetime):
     return (dt - _epoch.astimezone(dt.tzinfo)).total_seconds() * 1000
 
 
-def _millis_to_datetime(millis: int, tz: pytz.tzinfo.DstTzInfo):
-    return datetime.datetime.fromtimestamp(millis / 1000, _server_tz)
+def _millis_to_datetime(millis: int, tz: pytz.tzinfo.DstTzInfo) -> datetime.datetime:
+    return datetime.datetime.fromtimestamp(millis / 1000, tz)
 
 
 class RcDatetime:
