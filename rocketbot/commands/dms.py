@@ -10,7 +10,7 @@ import rocketbot.master as master
 import rocketbot.models as m
 
 
-class DMS(c.BaseCommand):
+class DMSClient(c.BaseCommand):
     def __init__(self, master: master.Master, token: str):
         self._create_dmsclient_config_if_missing(token)
         self.master = master

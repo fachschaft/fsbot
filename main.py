@@ -16,8 +16,8 @@ async def go():
     while True:
         masterbot = master.Master(c.SERVER, c.BOTNAME, c.PASSWORD, loop)
 
-        commands = [com.Usage(masterbot), com.Ping(masterbot), com.Poll(masterbot, c.BOTNAME),
-                    com.DMS(masterbot, c.DMS_TOKEN)]
+        commands = [com.Usage(masterbot), com.Ping(masterbot), com.Poll(masterbot, c.BOTNAME)]
+        direct_only_commands = [com.DMSClient(masterbot, c.DMS_TOKEN)]
 
         # Public command bot
         masterbot.bots.append(
@@ -27,7 +27,7 @@ async def go():
         # Direct message bot
         masterbot.bots.append(
             bots.RoomTypeCommandBot(
-                master=masterbot, username=c.BOTNAME, commands=commands,
+                master=masterbot, username=c.BOTNAME, commands=commands + direct_only_commands,
                 enable_direct_message=True))
         # Mensa bot
         masterbot.bots.append(
