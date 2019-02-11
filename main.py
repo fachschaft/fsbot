@@ -16,7 +16,8 @@ async def go():
     while True:
         masterbot = master.Master(c.SERVER, c.BOTNAME, c.PASSWORD, loop)
 
-        commands = [com.Usage(masterbot), com.Ping(masterbot), com.Poll(masterbot, c.BOTNAME)]
+        commands = [com.Usage(masterbot), com.Ping(masterbot), com.Poll(masterbot, c.BOTNAME),
+                    com.DMS(masterbot, c.DMS_TOKEN)]
 
         # Public command bot
         masterbot.bots.append(
