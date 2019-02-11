@@ -5,7 +5,7 @@ from typing import List
 from rocketchat_API.rocketchat import RocketChat
 from rocketchat_API.APIExceptions.RocketExceptions import RocketConnectionException
 
-import rocketbot.bots as b
+import rocketbot.bots.base as b
 import rocketbot.client as client
 import rocketbot.exception as exp
 import rocketbot.models as m
