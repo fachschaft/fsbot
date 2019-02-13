@@ -248,6 +248,9 @@ class Poll:
         if len(self.options) >= len(NUMBER_TO_LETTER_EMOJI):
             return None
 
+        if any([opt for opt in self.options if opt.text == new_option]):
+            return None
+
         num = len(self.options)
         emoji = NUMBER_TO_LETTER_EMOJI[num]
         option = PollOption(text=new_option, _id=num, emoji=emoji)
