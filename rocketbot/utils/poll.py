@@ -1,6 +1,5 @@
 import collections
 import dataclasses
-import ejson
 import json
 import re
 import shlex
@@ -37,22 +36,8 @@ class PollCache:
                     return possible_id
         raise exp.RocketBotPollException('Could not find a new id')
 
-    def add(self, poll: 'Poll'):
-        self.by_id[poll.id] = poll
-        self.last_active_by_room_id[poll.room_id] = poll
-        self.by_original_msg_id[poll.original_msg_id] = poll
-
-        if poll.status_msg_id is not None:
-            self.by_status_msg_id[poll.status_msg_id] = poll
-        else:
-            raise exp.RocketBotPollException('Missing status_msg_id')
-
-        if poll.poll_msg_id is not None:
-            self.by_poll_msg_id[poll.poll_msg_id] = poll
-        else:
-            raise exp.RocketBotPollException('Missing poll_msg_id')
-
-    def remove(self, *, id: Optional[str] = None, poll_msg_id: Optional[str] = None, original_msg_id: Optional[str] = None, status_msg_id: Optional[str] = None) -> 'Poll':
+    def get(self, *, id: Optional[str] = None, poll_msg_id: Optional[str] = None, original_msg_id: Optional[str] = None, status_msg_id: Optional[str] = None) -> Optional['Poll']:
+        poll = None
         if id is not None:
             poll = self.by_id[id]
         if poll_msg_id is not None:
@@ -62,8 +47,22 @@ class PollCache:
         if status_msg_id is not None:
             poll = self.by_status_msg_id[status_msg_id]
 
+        return poll
+
+    def add(self, poll: 'Poll'):
+        # Backref so poll can update cache if any key changes
+        poll._poll_cache = self
+        self.by_id[poll.id] = poll
+        self.by_original_msg_id[poll.original_msg_id] = poll
+        self.by_poll_msg_id[poll.poll_msg_id] = poll
+        self.by_status_msg_id[poll.status_msg_id] = poll
+        self.last_active_by_room_id[poll.room_id] = poll
+
+    def remove(self, *, id: Optional[str] = None, poll_msg_id: Optional[str] = None, original_msg_id: Optional[str] = None, status_msg_id: Optional[str] = None) -> 'Poll':
+        poll = self.get(id=id, poll_msg_id=poll_msg_id, original_msg_id=original_msg_id, status_msg_id=status_msg_id)
+
         if poll is None:
-            return None
+            raise exp.RocketBotPollException('No poll to remove')
 
         del self.by_id[poll.id]
         if poll.poll_msg_id:
@@ -96,7 +95,7 @@ class PollManager:
         if room.name is not None:
             self.roomBot.rooms.add(room.name)
 
-        status_msg = await self.master.client.send_message(self.statusroom._id, ejson.dumps(poll))
+        status_msg = await self.master.client.send_message(self.statusroom._id, _serialize_poll(poll))
         poll.status_msg_id = status_msg._id
 
         self.polls.add(poll)
@@ -117,7 +116,7 @@ class PollManager:
         if poll.poll_msg_id:
             self.polls.by_poll_msg_id[poll.poll_msg_id] = poll
 
-        await self.master.client.update_message({'_id': poll.status_msg_id, 'msg': ejson.dumps(poll)})
+        await self.master.client.update_message({'_id': poll.status_msg_id, 'msg': _serialize_poll(poll)})
 
     async def _poll_callback(self, message: m.Message) -> None:
         msg_id = message._id
@@ -137,7 +136,7 @@ class PollManager:
             if poll.update_reactions(message.reactions):
                 msg = await poll.to_message(self.master)
                 await self.master.client.update_message({'_id': poll.poll_msg_id, 'msg': msg})
-                await self.master.client.update_message({'_id': poll.status_msg_id, 'msg': ejson.dumps(poll)})
+                await self.master.client.update_message({'_id': poll.status_msg_id, 'msg': _serialize_poll(poll)})
 
     async def _status_callback(self, message: m.Message) -> None:
         # Handle only own messages
@@ -201,28 +200,22 @@ def _deserialize_polloption(data: Dict[str, Any]) -> PollOption:
     return PollOption(**data)
 
 
-@dataclasses.dataclass
 class Poll:
-    botname: str
-    original_msg_id: str
-    title: str
-    vote_options: List[str]
-    id: str
-    room_id: str
-    created_on: m.RcDatetime = dataclasses.field(default_factory=lambda: m.RcDatetime.now())
+    def __init__(self, id: str, room_id: str, original_msg_id: str, botname: str, title: str, vote_options: List[str]):
+        self._poll_cache: Optional[PollCache] = None
+        self._id = id
+        self.room_id = room_id
+        self._original_msg_id = original_msg_id
+        self.botname = botname
+        self.title = title
 
-    poll_msg_id: Optional[str] = None
-    status_msg_id: Optional[str] = None
-    user_to_number: Dict[str, int] = dataclasses.field(default_factory=lambda: collections.defaultdict(lambda: 1))
-    options: List[PollOption] = dataclasses.field(default_factory=list)
-    additional_people: List[PollOption] = dataclasses.field(default_factory=list)
+        self.created_on = m.RcDatetime.now()
+        self._poll_msg_id: Optional[str] = None
+        self._status_msg_id: Optional[str] = None
+        self.user_to_number: Dict[str, int] = collections.defaultdict(lambda: 1)
 
-    def __post_init__(self) -> None:
-        # mypy workaround for https://github.com/python/mypy/issues/5738
-        self.options = self.options  # type: List[PollOption]
-        self.user_to_number = self.user_to_number  # type: Dict[str, int]
-
-        for emoji, option_text in zip(LETTER_EMOJIS, self.vote_options):
+        self.options: List[PollOption] = list()
+        for emoji, option_text in zip(LETTER_EMOJIS, vote_options):
             option = PollOption(text=option_text, emoji=emoji, users=set([self.botname]))
             self.options.append(option)
 
@@ -230,6 +223,54 @@ class Poll:
         for emoji in NUMBER_EMOJI_TO_VALUE.keys():
             option = PollOption(text='', emoji=emoji, users=set([self.botname]))
             self.additional_people.append(option)
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, value: str) -> None:
+        if self._poll_cache is not None:
+            del self._poll_cache.by_id[self._id]
+            self._poll_cache.by_id[value] = self
+        self._id = value
+
+    @property
+    def original_msg_id(self):
+        return self._original_msg_id
+
+    @original_msg_id.setter
+    def original_msg_id(self, value: str) -> None:
+        if self._poll_cache is not None:
+            del self._poll_cache.by_original_msg_id[self._original_msg_id]
+            self._poll_cache.by_original_msg_id[value] = self
+        self._original_msg_id = value
+
+    @property
+    def poll_msg_id(self) -> str:
+        if self._poll_msg_id is None:
+            raise exp.RocketBotPollException('poll_msg_id is not set')
+        return self._poll_msg_id
+
+    @poll_msg_id.setter
+    def poll_msg_id(self, value: str) -> None:
+        if self._poll_cache is not None:
+            del self._poll_cache.by_poll_msg_id[self.poll_msg_id]
+            self._poll_cache.by_poll_msg_id[value] = self
+        self._poll_msg_id = value
+
+    @property
+    def status_msg_id(self) -> str:
+        if self._status_msg_id is None:
+            raise exp.RocketBotPollException('status_msg_id is not set')
+        return self._status_msg_id
+
+    @status_msg_id.setter
+    def status_msg_id(self, value: str) -> None:
+        if self._poll_cache is not None:
+            del self._poll_cache.by_status_msg_id[self.status_msg_id]
+            self._poll_cache.by_status_msg_id[value] = self
+        self._status_msg_id = value
 
     async def send_new_message(self, master: Master, room_id: str) -> None:
         """Send a new message including reactions
@@ -332,7 +373,6 @@ class Poll:
         return option
 
 
-@ejson.register_serializer(Poll)
 def _serialize_poll(poll: Poll):
     return {
         'id': poll.id,
@@ -343,6 +383,7 @@ def _serialize_poll(poll: Poll):
         'original_msg_id': poll.original_msg_id,
         'poll_msg_id': poll.poll_msg_id,
         'title': poll.title,
+        'created_on': poll.created_on.value
     }
 
 
@@ -353,9 +394,10 @@ def _deserialize_poll(data: Dict[str, Any]) -> Poll:
         botname=data['botname'],
         original_msg_id=data['original_msg_id'],
         title=data['title'],
-        vote_options=[],
-        poll_msg_id=data['poll_msg_id'])
+        vote_options=[])
 
+    poll.created_on.value = data['created_on']
+    poll.poll_msg_id = data['poll_msg_id']
     poll.options = [_deserialize_polloption(d) for d in data['options']]
     poll.additional_people = [_deserialize_polloption(d) for d in data['additional_people']]
     for option in poll.additional_people:
