@@ -1,5 +1,6 @@
 import collections
 import dataclasses
+import ejson
 import re
 import shlex
 from typing import Dict, Optional, List, Set
@@ -11,9 +12,10 @@ from rocketbot.master import Master
 
 
 class PollManager:
-    def __init__(self, master: Master, botname: str, statusroom: str):
+    def __init__(self, master: Master, botname: str, statusroomid: str):
         self.master = master
         self.botname = botname
+        self.statusroomid = statusroomid
         self.polls: Dict[str, 'Poll'] = {}
 
         # Pollbot: Responsible for updates made by commands/reactions
@@ -32,6 +34,8 @@ class PollManager:
             self.roomBot.rooms.add(room.name)
 
         self.polls[room_id] = poll
+        status_msg = await self.master.client.send_message(self.statusroomid, ejson.dumps(poll))
+        poll.status_msg_id = status_msg._id
 
     async def push(self, room_id: str, msg_id: str) -> None:
         """Resend an active poll
@@ -44,6 +48,7 @@ class PollManager:
         poll.original_msg_id = msg_id
 
         await poll.send_new_message(self.master, room_id)
+        await self.master.client.update_message({'_id': poll.status_msg_id, 'msg': ejson.dumps(poll)})
 
     async def _poll_callback(self, message: m.Message) -> None:
         poll = self.polls[message.rid]
@@ -63,6 +68,7 @@ class PollManager:
             if poll.update_reactions(message.reactions):
                 msg = await poll.to_message(self.master)
                 await self.master.client.update_message({'_id': poll.poll_msg._id, 'msg': msg})
+                await self.master.client.update_message({'_id': poll.status_msg_id, 'msg': ejson.dumps(poll)})
 
 
 def parse_args(args: str) -> List[str]:
@@ -99,17 +105,28 @@ class PollOption:
     users: Set[str]
 
 
+ejson.REGISTRY[PollOption] = dataclasses.asdict
+
+
+@dataclasses.dataclass
 class Poll:
-    def __init__(self, botname: str, msg_id: str, title: str, vote_options: List[str]):
-        self.botname = botname
-        self.original_msg_id = msg_id
-        self.title = title
+    botname: str
+    original_msg_id: str
+    title: str
+    vote_options: List[str]
 
-        self.poll_msg: Optional[m.Message] = None
-        self.user_to_number: Dict[str, int] = collections.defaultdict(lambda: 1)
+    poll_msg: Optional[m.Message] = None
+    status_msg_id: Optional[str] = None
+    user_to_number: Dict[str, int] = dataclasses.field(default_factory=lambda: collections.defaultdict(lambda: 1))
+    options: List[PollOption] = dataclasses.field(default_factory=list)
+    additionl_people: List[PollOption] = dataclasses.field(default_factory=list)
 
-        self.options: List[PollOption] = list()
-        for emoji, option_text in zip(LETTER_EMOJIS, vote_options):
+    def __post_init__(self) -> None:
+        # mypy workaround for https://github.com/python/mypy/issues/5738
+        self.options = self.options  # type: List[PollOption]
+        self.user_to_number = self.user_to_number  # type: Dict[str, int]
+
+        for emoji, option_text in zip(LETTER_EMOJIS, self.vote_options):
             option = PollOption(text=option_text, emoji=emoji, users=set([self.botname]))
             self.options.append(option)
 
@@ -216,3 +233,18 @@ class Poll:
         option = PollOption(text=new_option, emoji=emoji, users=set([self.botname]))
         self.options.append(option)
         return option
+
+
+@ejson.register_serializer(Poll)
+def _serialite_poll(poll: Poll):
+    return {
+        'additionl_people': poll.additionl_people,
+        'options': poll.options,
+        'original_msg_id': poll.original_msg_id,
+        'title': poll.title,
+    }
+
+
+@ejson.register_serializer(set)
+def _serialite_set(set_: Set):
+    return list(set_)

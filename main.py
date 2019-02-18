@@ -17,7 +17,8 @@ async def go():
     while True:
         masterbot = master.Master(c.SERVER, c.BOTNAME, c.PASSWORD, loop)
 
-        pollmanager = pollutil.PollManager(master=masterbot, botname=c.BOTNAME, statusroom=c.POLL_STATUS_ROOM)
+        statusroom = await masterbot.room(c.POLL_STATUS_ROOM)
+        pollmanager = pollutil.PollManager(master=masterbot, botname=c.BOTNAME, statusroomid=statusroom._id)
 
         usage = com.Usage(master=masterbot)
         ping = com.Ping(master=masterbot)
