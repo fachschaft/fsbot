@@ -15,6 +15,18 @@ from rocketbot.master import Master
 
 
 class PollCache:
+    """A simple cache which lets you access polls by different key properties.
+    If a key property changes the pollcache has to be updated manually
+
+    These key properties are:
+    - id: Human understandable id
+    - original_msg_id: Message id which created the poll
+    - poll_msg_id: Message id of the poll
+    - status_msg_id: Message id of the status msg which persists the poll in json
+
+    Additional feature:
+    - Get last active poll by room id
+    """
     def __init__(self):
         self.by_id: Dict[str, Poll] = {}
         self.by_original_msg_id: Dict[str, Poll] = {}
@@ -23,6 +35,8 @@ class PollCache:
         self.last_active_by_room_id: Dict[str, Poll] = {}
 
     def new_id(self) -> str:
+        """Returns a unique (not used by any active poll) human understandable id
+        """
         # List of Tuples:
         # First element is the number of words to try
         # Second element is the number of repetitions (-1 = infinity)
@@ -37,18 +51,25 @@ class PollCache:
                     return possible_id
         raise exp.RocketBotPollException('Could not find a new id')
 
-    def get(self, *, id: Optional[str] = None, poll_msg_id: Optional[str] = None, original_msg_id: Optional[str] = None, status_msg_id: Optional[str] = None) -> Optional['Poll']:
-        poll = None
-        if id is not None:
-            poll = self.by_id[id]
-        if poll_msg_id is not None:
-            poll = self.by_poll_msg_id[poll_msg_id]
-        if original_msg_id is not None:
-            poll = self.by_original_msg_id[original_msg_id]
-        if status_msg_id is not None:
-            poll = self.by_status_msg_id[status_msg_id]
-
-        return poll
+    def get(self, *,
+            id: Optional[str] = None,
+            poll_msg_id: Optional[str] = None,
+            original_msg_id: Optional[str] = None,
+            status_msg_id: Optional[str] = None,
+            room_id: Optional[str] = None) -> Optional['Poll']:
+        """Get a poll by a single key property
+        """
+        if id is not None and id in self.by_id:
+            return self.by_id[id]
+        if poll_msg_id is not None and poll_msg_id in self.by_poll_msg_id:
+            return self.by_poll_msg_id[poll_msg_id]
+        if original_msg_id is not None and original_msg_id in self.by_original_msg_id:
+            return self.by_original_msg_id[original_msg_id]
+        if status_msg_id is not None and status_msg_id in self.by_status_msg_id:
+            return self.by_status_msg_id[status_msg_id]
+        if room_id is not None and room_id in self.last_active_by_room_id:
+            return self.last_active_by_room_id[room_id]
+        return None
 
     def add(self, poll: 'Poll'):
         # Backref so poll can update cache if any key changes
@@ -59,25 +80,34 @@ class PollCache:
         self.by_status_msg_id[poll.status_msg_id] = poll
         self.last_active_by_room_id[poll.room_id] = poll
 
-    def remove(self, *, id: Optional[str] = None, poll_msg_id: Optional[str] = None, original_msg_id: Optional[str] = None, status_msg_id: Optional[str] = None) -> 'Poll':
-        poll = self.get(id=id, poll_msg_id=poll_msg_id, original_msg_id=original_msg_id, status_msg_id=status_msg_id)
+    def remove(self, *,
+               id: Optional[str] = None,
+               poll_msg_id: Optional[str] = None,
+               original_msg_id: Optional[str] = None,
+               status_msg_id: Optional[str] = None) -> 'Poll':
 
+        poll = self.get(id=id, poll_msg_id=poll_msg_id, original_msg_id=original_msg_id, status_msg_id=status_msg_id)
         if poll is None:
             raise exp.RocketBotPollException('No poll to remove')
 
         del self.by_id[poll.id]
-        if poll.poll_msg_id:
-            del self.by_poll_msg_id[poll.poll_msg_id]
         del self.by_original_msg_id[poll.original_msg_id]
+        del self.by_poll_msg_id[poll.poll_msg_id]
+        del self.by_status_msg_id[poll.status_msg_id]
+        room_poll = self.last_active_by_room_id[poll.room_id]
+        if poll.id == room_poll.id:
+            del self.last_active_by_room_id[poll.room_id]
         return poll
 
 
 class PollManager:
+    """Responsible for the poll creation and overall interaction with the system
+    """
     def __init__(self, master: Master, botname: str, statusroom: m.RoomRef):
         self.master = master
         self.botname = botname
         self.statusroom = statusroom
-        self.polls: PollCache = PollCache()
+        self.polls = PollCache()
 
         # Pollbot: Responsible for updates made by commands/reactions
         self.roomBot = bots.RoomCustomBot(master=master, whitelist=[], callback=self._poll_callback)
@@ -90,14 +120,11 @@ class PollManager:
     async def create(self, room_id: str, msg_id: str, title: str, options: List[str]) -> None:
         id = self.polls.new_id()
         poll = Poll(botname=self.botname, original_msg_id=msg_id, title=title, vote_options=options, id=id, room_id=room_id)
-        await poll.send_new_message(self.master, room_id)
+        await poll.send_new_poll_message(self.master, room_id, self.statusroom._id)
 
         room = await self.master.room(room_id)
         if room.name is not None:
             self.roomBot.rooms.add(room.name)
-
-        status_msg = await self.master.client.send_message(self.statusroom._id, _serialize_poll(poll))
-        poll.status_msg_id = status_msg._id
 
         self.polls.add(poll)
 
@@ -109,15 +136,12 @@ class PollManager:
             return
 
         poll = self.polls.last_active_by_room_id[room_id]
+        self.polls.remove(id=poll.id)
+
         poll.original_msg_id = msg_id
+        await poll.send_new_poll_message(self.master, room_id, self.statusroom._id)
 
-        if poll.poll_msg_id:
-            del self.polls.by_poll_msg_id[poll.poll_msg_id]
-        await poll.send_new_message(self.master, room_id)
-        if poll.poll_msg_id:
-            self.polls.by_poll_msg_id[poll.poll_msg_id] = poll
-
-        await self.master.client.update_message({'_id': poll.status_msg_id, 'msg': _serialize_poll(poll)})
+        self.polls.add(poll)
 
     async def _poll_callback(self, message: m.Message) -> None:
         msg_id = message._id
@@ -135,9 +159,7 @@ class PollManager:
         if msg_id in self.polls.by_poll_msg_id:
             poll = self.polls.by_poll_msg_id[msg_id]
             if poll.update_reactions(message.reactions):
-                msg = await poll.to_message(self.master)
-                await self.master.client.update_message({'_id': poll.poll_msg_id, 'msg': msg})
-                await self.master.client.update_message({'_id': poll.status_msg_id, 'msg': _serialize_poll(poll)})
+                poll.resend_old_message(self.master)
 
     async def _status_callback(self, message: m.Message) -> None:
         # Handle only own messages
@@ -285,7 +307,7 @@ class Poll:
             self._poll_cache.by_status_msg_id[value] = self
         self._status_msg_id = value
 
-    async def send_new_message(self, master: Master, room_id: str) -> None:
+    async def send_new_poll_message(self, master: Master, room_id: str, statusroom_id: str) -> None:
         """Send a new message including reactions
         """
         msg = await self.to_message(master)
@@ -293,14 +315,23 @@ class Poll:
         self.poll_msg_id = poll_msg._id
         await master.client.update_message({'_id': self.poll_msg_id, 'reactions': self._get_reactions()})
 
+        if self._status_msg_id is None:
+            status_msg = await master.client.send_message(statusroom_id, _serialize_poll(self))
+            self.status_msg_id = status_msg._id
+        else:
+            await master.client.update_message({'_id': self.status_msg_id, 'msg': _serialize_poll(self)})
+
     async def resend_old_message(self, master: Master) -> None:
         """Resend the old message including reactions
         """
         if self.poll_msg_id is None:
-            raise exp.RocketBotPollException("No old message to resend")
+            raise exp.RocketBotPollException('No old message to resend')
+        if self.status_msg_id is None:
+            raise exp.RocketBotPollException('Missing status message')
 
         msg = await self.to_message(master)
         await master.client.update_message({'_id': self.poll_msg_id, 'msg': msg, 'reactions': self._get_reactions()})
+        await master.client.update_message({'_id': self.status_msg_id, 'msg': _serialize_poll(self)})
 
     def _get_reactions(self) -> Dict[str, dict]:
         """Get reactions by the current state

@@ -28,7 +28,7 @@ class Mensa(c.BaseCommand):
         if command in ['essen', 'food']:
             await self.food_command(args, message)
         if command in ['etm', 'etlm']:
-            poll = self.pollmanager.polls[message.rid] if message.rid in self.pollmanager.polls else None
+            poll = self.pollmanager.polls.get(room_id=message.rid)
             poll_options = pollutil.parse_args(args)
 
             if poll and poll.title == 'ETM' and poll.created_on.is_today():
