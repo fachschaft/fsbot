@@ -147,13 +147,25 @@ class PollManager:
         if not message.editedBy or message.editedBy.username == self.botname:
             return
 
-        poll = _deserialize_poll(message.msg)
-        poll.status_msg_id = message._id
+        poll: Optional[Poll]
+        if message.msg:
+            try:
+                poll = _deserialize_poll(message.msg)
+                poll.status_msg_id = message._id
 
-        # We don't know what was changed so readd the poll to the cache and resend it
-        self.polls.remove(status_msg_id=message._id)
-        self.polls.add(poll)
-        await poll.resend_old_message(self.master)
+                # We don't know what was changed so readd the poll to the cache and resend it
+                self.polls.remove(status_msg_id=message._id)
+                self.polls.add(poll)
+                await poll.resend_old_message(self.master)
+            except json.decoder.JSONDecodeError:
+                poll = self.polls.get(status_msg_id=message._id)
+                if poll:
+                    await self.master.client.update_message({'_id': poll.status_msg_id, 'msg': _serialize_poll(poll)})
+
+        else:
+            # We don't know what was changed so readd the poll to the cache and resend it
+            poll = self.polls.remove(status_msg_id=message._id)
+            await self.master.client.delete_message(poll.poll_msg_id)
 
 
 def parse_args(args: str) -> List[str]:
