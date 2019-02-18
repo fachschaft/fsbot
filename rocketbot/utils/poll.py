@@ -32,7 +32,7 @@ class PollCache:
             cnt = 0
             while cnt != num_reps:
                 cnt += 1
-                possible_id = petname.generate(words=num_words).to_lower()
+                possible_id = petname.generate(words=num_words).lower()
                 if possible_id not in self.by_id:
                     return possible_id
         raise exp.RocketBotPollException('Could not find a new id')
@@ -52,13 +52,15 @@ class PollCache:
         else:
             raise exp.RocketBotPollException('Missing poll_msg_id')
 
-    def remove(self, *, id: Optional[str] = None, poll_msg_id: Optional[str] = None, original_msg_id: Optional[str] = None) -> 'Poll':
+    def remove(self, *, id: Optional[str] = None, poll_msg_id: Optional[str] = None, original_msg_id: Optional[str] = None, status_msg_id: Optional[str] = None) -> 'Poll':
         if id is not None:
             poll = self.by_id[id]
         if poll_msg_id is not None:
             poll = self.by_poll_msg_id[poll_msg_id]
         if original_msg_id is not None:
             poll = self.by_original_msg_id[original_msg_id]
+        if status_msg_id is not None:
+            poll = self.by_status_msg_id[status_msg_id]
 
         if poll is None:
             return None
@@ -129,7 +131,9 @@ class PollManager:
 
                 if poll.poll_msg_id:
                     await self.master.client.delete_message(poll.poll_msg_id)
-        if poll.poll_msg_id and msg_id == poll.poll_msg_id:
+                    await self.master.client.delete_message(poll.status_msg_id)
+        if msg_id in self.polls.by_poll_msg_id:
+            poll = self.polls.by_poll_msg_id[msg_id]
             if poll.update_reactions(message.reactions):
                 msg = await poll.to_message(self.master)
                 await self.master.client.update_message({'_id': poll.poll_msg_id, 'msg': msg})
@@ -145,7 +149,11 @@ class PollManager:
 
         poll = _deserialize_poll(json.loads(message.msg))
         poll.status_msg_id = message._id
-        print(poll)
+
+        # We don't know what was changed so readd the poll to the cache and resend it
+        self.polls.remove(status_msg_id=message._id)
+        self.polls.add(poll)
+        await poll.resend_old_message(self.master)
 
 
 def parse_args(args: str) -> List[str]:
@@ -327,6 +335,8 @@ class Poll:
 @ejson.register_serializer(Poll)
 def _serialize_poll(poll: Poll):
     return {
+        'id': poll.id,
+        'room_id': poll.room_id,
         'additional_people': [_serialize_polloption(o) for o in poll.additional_people],
         'botname': poll.botname,
         'options': [_serialize_polloption(o) for o in poll.options],
