@@ -117,6 +117,21 @@ class PollManager:
         statusbot = bots.RoomCustomBot(master=master, whitelist=[statusroom.name], callback=self._status_callback)
         self.master.bots.append(statusbot)
 
+        # Load history of polls
+        room_ids = set()
+        history = self.master.rest_api.channels_history(statusroom._id, count=100).json()
+        for msg in history['messages'][::-1]:
+            try:
+                poll = _deserialize_poll(msg['msg'])
+                poll.status_msg_id = msg['_id']
+                self.polls.add(poll)
+                room_ids.add(poll.room_id)
+            except json.decoder.JSONDecodeError as e:
+                print(e)
+        for rid in room_ids:
+            room = self.master.rest_api.rooms_info(room_id=rid).json()
+            self.roomBot.rooms.add(room['room']['name'])
+
     async def create(self, room_id: str, msg_id: str, title: str, options: List[str]) -> None:
         id = self.polls.new_id()
         poll = Poll(botname=self.botname, original_msg_id=msg_id, title=title, vote_options=options, id=id, room_id=room_id)
@@ -159,7 +174,7 @@ class PollManager:
         if msg_id in self.polls.by_poll_msg_id:
             poll = self.polls.by_poll_msg_id[msg_id]
             if poll.update_reactions(message.reactions):
-                poll.resend_old_message(self.master)
+                await poll.resend_old_message(self.master)
 
     async def _status_callback(self, message: m.Message) -> None:
         # Handle only own messages
