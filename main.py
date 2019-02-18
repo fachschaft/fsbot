@@ -3,6 +3,7 @@ import asyncio
 import rocketbot.bots as bots
 import rocketbot.commands as com
 import rocketbot.master as master
+import rocketbot.models as m
 import rocketbot.utils.poll as pollutil
 
 try:
@@ -17,8 +18,9 @@ async def go():
     while True:
         masterbot = master.Master(c.SERVER, c.BOTNAME, c.PASSWORD, loop)
 
-        statusroom = await masterbot.room(c.POLL_STATUS_ROOM)
-        pollmanager = pollutil.PollManager(master=masterbot, botname=c.BOTNAME, statusroomid=statusroom._id)
+        result = masterbot.rest_api.rooms_info(room_name=c.POLL_STATUS_ROOM).json()
+        statusroom = m.create(m.Room, result['room'])
+        pollmanager = pollutil.PollManager(master=masterbot, botname=c.BOTNAME, statusroom=statusroom.to_roomref())
 
         usage = com.Usage(master=masterbot)
         ping = com.Ping(master=masterbot)

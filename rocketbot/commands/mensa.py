@@ -31,7 +31,7 @@ class Mensa(c.BaseCommand):
             poll = self.pollmanager.polls[message.rid] if message.rid in self.pollmanager.polls else None
             poll_options = pollutil.parse_args(args)
 
-            if poll and poll.title == 'ETM' and poll.poll_msg and poll.poll_msg.ts.is_today():
+            if poll and poll.title == 'ETM' and poll.created_on.is_today():
                 # If its the same day, add the options to the poll
                 if any([await poll.add_option(option_txt) for option_txt in poll_options]):
                     await poll.resend_old_message(self.master)

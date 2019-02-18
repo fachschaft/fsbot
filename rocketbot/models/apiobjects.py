@@ -256,6 +256,10 @@ class Room:
         self.u = models.create(UserRef, self.u)
         self.lastMessage = models.create(Message, self.lastMessage)
 
+    def to_roomref(self) -> RoomRef:
+        name = self.name if self.name else ""
+        return RoomRef(name=name, _id=self._id)
+
     def to_roomref2(self, is_participant: bool) -> RoomRef2:
         return RoomRef2(roomType=self.t, roomName=self.name, roomParticipant=is_participant)
 

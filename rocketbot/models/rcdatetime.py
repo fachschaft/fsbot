@@ -40,6 +40,10 @@ class RcDatetime:
         millis = value['$date']
         return RcDatetime(_millis_to_datetime(millis, _server_tz))
 
+    @staticmethod
+    def now():
+        return RcDatetime(datetime.datetime.now())
+
     def is_today(self) -> bool:
         return datetime.datetime.today().date() == self.value.date()
 
