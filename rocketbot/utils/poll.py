@@ -120,6 +120,8 @@ class PollManager:
         # Load history of polls
         room_ids = set()
         history = self.master.rest_api.channels_history(statusroom._id, count=100).json()
+        if 'messages' not in history:
+            return
         for msg in history['messages'][::-1]:
             try:
                 poll = _deserialize_poll(msg['msg'])
