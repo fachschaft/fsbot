@@ -3,6 +3,7 @@ import asyncio
 import rocketbot.bots as bots
 import rocketbot.commands as com
 import rocketbot.master as master
+import rocketbot.utils.poll as pollutil
 
 try:
     import bot_config as c
@@ -16,11 +17,13 @@ async def go():
     while True:
         masterbot = master.Master(c.SERVER, c.BOTNAME, c.PASSWORD, loop)
 
+        pollmanager = pollutil.PollManager(master=masterbot, botname=c.BOTNAME, statusroom=c.POLL_STATUS_ROOM)
+
         usage = com.Usage(master=masterbot)
         ping = com.Ping(master=masterbot)
-        poll = com.Poll(master=masterbot, botname=c.BOTNAME)
+        poll = com.Poll(master=masterbot, pollmanager=pollmanager)
         dms = com.Dms(master=masterbot, token=c.DMS_TOKEN)
-        mensa = com.Mensa(master=masterbot)
+        mensa = com.Mensa(master=masterbot, pollmanager=pollmanager)
 
         # Public command bot
         masterbot.bots.append(

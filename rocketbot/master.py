@@ -35,7 +35,7 @@ class Master:
         self.client.disconnect()
 
     async def room(self, room_id: str) -> m.Room:
-        while room_id not in self._rooms_cache:
+        if room_id not in self._rooms_cache:
             try:
                 result = self.rest_api.rooms_info(room_id=room_id).json()
                 if 'room' in result:

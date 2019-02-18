@@ -3,10 +3,14 @@ from typing import List, Tuple
 import rocketbot.commands as c
 import rocketbot.models as m
 import rocketbot.utils.meals as meals
-import rocketbot.utils.poll as poll
+import rocketbot.utils.poll as pollutil
 
 
 class Mensa(c.BaseCommand):
+    def __init__(self, pollmanager: pollutil.PollManager, **kwargs):
+        super().__init__(**kwargs)
+        self.pollmanager = pollmanager
+
     def usage(self) -> List[Tuple[str, str]]:
         return [
             ('essen | food', 'Show meals of the day'),
@@ -24,20 +28,18 @@ class Mensa(c.BaseCommand):
         if command in ['essen', 'food']:
             await self.food_command(args, message)
         if command in ['etm', 'etlm']:
-            poll_obj = poll.get(message.rid)
-            poll_options = poll.parse_args(args)
+            poll = self.pollmanager.polls[message.rid] if message.rid in self.pollmanager.polls else None
+            poll_options = pollutil.parse_args(args)
 
-            if poll_obj and poll_obj.poll_msg and poll_obj.poll_msg.ts.is_today():
+            if poll and poll.title == 'ETM' and poll.poll_msg and poll.poll_msg.ts.is_today():
                 # If its the same day, add the options to the poll
-                for option_txt in poll_options:
-                    option = await poll_obj.add_option(option_txt)
-                    if option:
-                        await self.master.client.set_reaction(option.emoji, poll_obj.poll_msg._id, True)
+                if any([await poll.add_option(option_txt) for option_txt in poll_options]):
+                    await poll.resend_old_message(self.master)
             else:
                 if len(poll_options) == 0:
                     poll_options.append('11:30')
                 await self.food_command("", message)
-                await poll.create(message.rid, message._id, command, poll_options)
+                await self.pollmanager.create(message.rid, message._id, 'ETM', poll_options)
 
     async def food_command(self, args: str, msg: m.Message):
         """Reply with the meals of the day.
