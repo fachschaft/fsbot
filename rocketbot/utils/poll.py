@@ -1,5 +1,6 @@
 import collections
 import dataclasses
+import datetime
 import json
 import re
 import shlex
@@ -146,7 +147,7 @@ class PollManager:
         if not message.editedBy or message.editedBy.username == self.botname:
             return
 
-        poll = _deserialize_poll(json.loads(message.msg))
+        poll = _deserialize_poll(message.msg)
         poll.status_msg_id = message._id
 
         # We don't know what was changed so readd the poll to the cache and resend it
@@ -373,8 +374,8 @@ class Poll:
         return option
 
 
-def _serialize_poll(poll: Poll):
-    return {
+def _serialize_poll(poll: Poll) -> str:
+    return json.dumps({
         'id': poll.id,
         'room_id': poll.room_id,
         'additional_people': [_serialize_polloption(o) for o in poll.additional_people],
@@ -383,11 +384,12 @@ def _serialize_poll(poll: Poll):
         'original_msg_id': poll.original_msg_id,
         'poll_msg_id': poll.poll_msg_id,
         'title': poll.title,
-        'created_on': poll.created_on.value
-    }
+        'created_on': poll.created_on.value.isoformat()
+    })
 
 
-def _deserialize_poll(data: Dict[str, Any]) -> Poll:
+def _deserialize_poll(strdata: str) -> Poll:
+    data = json.loads(strdata)
     poll = Poll(
         id=data['id'],
         room_id=data['room_id'],
@@ -396,7 +398,7 @@ def _deserialize_poll(data: Dict[str, Any]) -> Poll:
         title=data['title'],
         vote_options=[])
 
-    poll.created_on.value = data['created_on']
+    poll.created_on.value = datetime.datetime.strptime(data['created_on'], "%Y-%m-%dT%H:%M:%S.%f")
     poll.poll_msg_id = data['poll_msg_id']
     poll.options = [_deserialize_polloption(d) for d in data['options']]
     poll.additional_people = [_deserialize_polloption(d) for d in data['additional_people']]
