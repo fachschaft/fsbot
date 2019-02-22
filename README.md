@@ -1,5 +1,7 @@
 # Rocketbot
 
+[![Build Status](https://travis-ci.org/fachschaft/rocketbot.svg?branch=master)](https://travis-ci.org/fachschaft/rocketbot)
+
 This repository contains a [Rocket.Chat](https://github.com/RocketChat/Rocket.Chat) bot based on the [realtime api](https://rocket.chat/docs/developer-guides/realtime-api/).
 
 # Usage
