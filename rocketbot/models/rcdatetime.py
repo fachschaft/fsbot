@@ -33,17 +33,17 @@ class RcDatetime:
     def __repr__(self) -> str:
         return self.value.astimezone(_local_tz).isoformat()
 
-    @overload
+    @overload  # noqa: F811, see https://github.com/PyCQA/pyflakes/issues/434
     @staticmethod
     def from_server(value: 'RcDatetime') -> 'RcDatetime':
-        ...
+        pass
 
-    @overload
+    @overload  # noqa: F811
     @staticmethod
     def from_server(value: None) -> None:
-        ...
+        pass
 
-    @staticmethod
+    @staticmethod  # noqa: F811
     def from_server(value: Any) -> Optional['RcDatetime']:
         """Factory function for date objects from the server.
         Dateobjects from rocketchat look like this:
