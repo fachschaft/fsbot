@@ -17,7 +17,7 @@ class PrefixCommandMixin(b.BaseBot):
             res.extend(c.usage())
         return res
 
-    async def handle(self, message: m.Message):
+    async def handle(self, message: m.Message) -> None:
         if not message.msg:
             return
         command = message.msg.split()[0].lower()
@@ -40,5 +40,5 @@ class CustomHandlerMixin(b.BaseBot):
         super().__init__(**kwargs)
         self._callback = self._init_value(kwargs, 'callback')
 
-    async def handle(self, message: m.Message):
+    async def handle(self, message: m.Message) -> None:
         await self._callback(message)

@@ -1,12 +1,12 @@
 import abc
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import rocketbot.master as master
 import rocketbot.models as m
 
 
 class BaseBot(abc.ABC):
-    def __init__(self, *, master: master.Master, **kwargs):
+    def __init__(self, *, master: master.Master, **kwargs: Any):
         self.master = master
 
     def is_applicable(self, room: m.RoomRef2) -> bool:

@@ -60,7 +60,7 @@ class Master:
     async def enable_bots(self) -> None:
         """Enable bots by subscribing the following callback to all messages
         """
-        async def _callback(result: m.SubscriptionResult):
+        async def _callback(result: m.SubscriptionResult) -> None:
             if result.room is None:
                 return
 

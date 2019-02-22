@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import rocketbot.commands as c
 import rocketbot.models as m
@@ -6,7 +6,7 @@ import rocketbot.utils.poll as pollutil
 
 
 class Poll(c.BaseCommand):
-    def __init__(self, pollmanager: pollutil.PollManager, **kwargs):
+    def __init__(self, pollmanager: pollutil.PollManager, **kwargs: Any):
         super().__init__(**kwargs)
         self.pollmanager = pollmanager
 

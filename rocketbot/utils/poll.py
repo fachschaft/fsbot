@@ -71,7 +71,7 @@ class PollCache:
             return self.last_active_by_room_id[room_id]
         return None
 
-    def add(self, poll: 'Poll'):
+    def add(self, poll: 'Poll') -> None:
         # Backref so poll can update cache if any key changes
         poll._poll_cache = self
         self.by_id[poll.id] = poll
@@ -406,7 +406,7 @@ class Poll:
             return []
         return reactions[key]['usernames']
 
-    async def to_message(self, master: Master):
+    async def to_message(self, master: Master) -> str:
         """Create a message representing the poll
         """
 
@@ -420,7 +420,7 @@ class Poll:
 
         return msg
 
-    async def add_option(self, new_option) -> Optional[PollOption]:
+    async def add_option(self, new_option: str) -> Optional[PollOption]:
         if len(self.options) >= len(LETTER_EMOJIS):
             return None
 

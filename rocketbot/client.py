@@ -9,7 +9,7 @@ import rocketbot.exception as exp
 import rocketbot.models as m
 
 
-async def _subscription_cb_wrapper(col_q: asyncio.Queue, event_name: str, callback: Callable[[m.SubscriptionResult], Awaitable]):
+async def _subscription_cb_wrapper(col_q: asyncio.Queue, event_name: str, callback: Callable[[m.SubscriptionResult], Awaitable]) -> None:
     """Wrapper for a subscription callback with handles incoming messages and adds a basic errorhandling
     """
     while True:

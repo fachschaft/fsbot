@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Any, List, Tuple
 import asyncio
 import os
 import re
@@ -10,7 +10,7 @@ import rocketbot.models as m
 
 
 class Dms(c.BaseCommand):
-    def __init__(self, token: str, **kwargs):
+    def __init__(self, token: str, **kwargs: Any):
         super().__init__(**kwargs)
         self._create_dmsclient_config_if_missing(token)
 
@@ -53,7 +53,7 @@ class Dms(c.BaseCommand):
             result_str = "Done."
         await self.master.client.send_message(message.rid, result_str)
 
-    def _create_dmsclient_config_if_missing(self, token: str):
+    def _create_dmsclient_config_if_missing(self, token: str) -> None:
         rcfile = os.path.expanduser('~/.dmsrc')
         config = dms.DmsConfig()
         status = config.read(rcfile)

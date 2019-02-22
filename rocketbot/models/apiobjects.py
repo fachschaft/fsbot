@@ -7,12 +7,12 @@ import ejson
 import rocketbot.models as models
 
 
-def _serialize_dataclass(instance) -> dict:
+def _serialize_dataclass(instance: object) -> dict:
     """Serialize a dataclass"""
     return dataclasses.asdict(instance)
 
 
-def _serialize_enum(instance) -> dict:
+def _serialize_enum(instance: Enum) -> dict:
     """Serialite an enum"""
     return instance.value
 

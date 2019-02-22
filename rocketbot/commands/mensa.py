@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import rocketbot.commands as c
 import rocketbot.models as m
@@ -7,7 +7,7 @@ import rocketbot.utils.poll as pollutil
 
 
 class Mensa(c.BaseCommand):
-    def __init__(self, pollmanager: pollutil.PollManager, **kwargs):
+    def __init__(self, pollmanager: pollutil.PollManager, **kwargs: Any):
         super().__init__(**kwargs)
         self.pollmanager = pollmanager
 
@@ -41,7 +41,7 @@ class Mensa(c.BaseCommand):
                 await self.food_command("", message)
                 await self.pollmanager.create(message.rid, message._id, 'ETM', poll_options)
 
-    async def food_command(self, args: str, msg: m.Message):
+    async def food_command(self, args: str, msg: m.Message) -> None:
         """Reply with the meals of the day.
 
         Possible extentions:
@@ -56,7 +56,7 @@ class Mensa(c.BaseCommand):
             foodmsg = await meals.get_food()
         await self.master.client.send_message(msg.rid, foodmsg)
 
-    async def etx_command(self, etx: str, args: str, msg: m.Message):
+    async def etx_command(self, etx: str, args: str, msg: m.Message) -> None:
         """To be implemented
 
         Possbile functions

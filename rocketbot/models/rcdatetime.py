@@ -11,7 +11,7 @@ _local_tz = tzlocal.get_localzone()
 _epoch = datetime.datetime.utcfromtimestamp(0).replace(tzinfo=pytz.UTC)
 
 
-def _datetime_to_millis(dt: datetime.datetime):
+def _datetime_to_millis(dt: datetime.datetime) -> float:
     return (dt - _epoch.astimezone(dt.tzinfo)).total_seconds() * 1000
 
 
@@ -49,6 +49,6 @@ class RcDatetime:
 
 
 @ejson.register_serializer(RcDatetime)
-def _serialize_rcdatetime(instance) -> dict:
+def _serialize_rcdatetime(instance: RcDatetime) -> dict:
     """Returns the value in the rocketchat date format"""
     return {"$date": _datetime_to_millis(instance.value.astimezone(_server_tz))}
