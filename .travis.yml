@@ -1,0 +1,13 @@
+language: python
+
+matrix:
+  include:
+  - python: "3.7"
+    env: STEP=lint
+  - python: "3.7"
+    env: STEP=mypy
+
+install:
+  - make update
+
+script: make $STEP
