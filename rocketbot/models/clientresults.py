@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List, Optional
+from typing import cast, List, Optional, Any
 
 import rocketbot.models as models
 
@@ -39,11 +39,13 @@ class LoadHistoryResult:
 @dataclasses.dataclass
 class SubscriptionResult:
     eventName: str
-    args: List[dict] = dataclasses.field(repr=False)
+    args: List[Any] = dataclasses.field(repr=False)
     message: models.Message = dataclasses.field(init=False)
     room: Optional[models.RoomRef2] = dataclasses.field(default=None, init=False)
 
     def __post_init__(self) -> None:
-        self.message = models.create(models.Message, self.args[0])  # pylint: disable=E1136
+        arg0 = cast(models.Message, self.args[0])  # pylint: disable=E1136
+        self.message = models.create(models.Message, arg0)
         if len(self.args) > 1:
-            self.room = models.create(models.RoomRef2, self.args[1])  # pylint: disable=E1136
+            arg1 = cast(models.RoomRef2, self.args[1])  # pylint: disable=E1136
+            self.room = models.create(models.RoomRef2, arg1)

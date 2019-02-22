@@ -1,15 +1,32 @@
 import re
-from typing import Any, Callable, TypeVar
+from typing import Any, Dict, Optional, Type, TypeVar, overload
 
 from rocketbot.models.rcdatetime import RcDatetime  # noqa: F401
-from rocketbot.models.apiobjects import Message, MessageType, RoleType, Room, RoomRef, RoomRef2, RoomType, UserRef  # noqa: F401
+from rocketbot.models.apiobjects import Message, MessageType, RoleType, Room, RoomRef, RoomRef2, RoomType, UserRef, File, Attachment  # noqa: F401
 from rocketbot.models.clientresults import *  # noqa: F401, F403
 
 
-T = TypeVar('T')
+T = TypeVar('T', Message, Room, UserRef, File, RoomRef2, Attachment)
 
 
-def create(ctor: Callable[..., T], kwargs: Any) -> T:
+@overload
+def create(ctor: Any, kwargs: None) -> None:
+    ...
+
+
+@overload
+def create(ctor: Type[T], kwargs: Dict[str, Any]) -> T:
+    ...
+
+
+@overload
+def create(ctor: Type[T], kwargs: T) -> T:
+    ...
+
+
+def create(ctor: Type[T], kwargs: Any) -> Optional[T]:
+    if kwargs is None:
+        return None
     try:
         return ctor(**kwargs)
     except TypeError as e:

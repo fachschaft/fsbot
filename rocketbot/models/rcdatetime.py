@@ -1,10 +1,13 @@
 import datetime
+import dateutil.parser
 import pytz
 import pytz.tzinfo
-from typing import Any
+from typing import overload, Any, Optional
 
 import ejson
 import tzlocal
+
+import rocketbot.exception as exp
 
 # Rocketchat uses the server timezone as reference
 _server_tz = pytz.timezone("Europe/Berlin")
@@ -30,14 +33,31 @@ class RcDatetime:
     def __repr__(self) -> str:
         return self.value.astimezone(_local_tz).isoformat()
 
+    @overload
     @staticmethod
-    def from_server(value: Any) -> 'RcDatetime':
+    def from_server(value: 'RcDatetime') -> 'RcDatetime':
+        ...
+
+    @overload
+    @staticmethod
+    def from_server(value: None) -> None:
+        ...
+
+    @staticmethod
+    def from_server(value: Any) -> Optional['RcDatetime']:
         """Factory function for date objects from the server.
         Dateobjects from rocketchat look like this:
         date = { '$date': time_in_milliseconds_since_epoch}
         """
-        millis = value['$date']
-        return RcDatetime(_millis_to_datetime(millis, _server_tz))
+        if value is None:
+            return None
+        if type(value) == str:
+            return RcDatetime(dateutil.parser.parse(value))
+        # tmp = cast(Dict[str, int], value)
+        if '$date' in value:
+            millis = value['$date']
+            return RcDatetime(_millis_to_datetime(millis, _server_tz))
+        raise exp.RocketBotException(f'Unkown RcDatetime format: "{value}"')
 
     @staticmethod
     def now() -> 'RcDatetime':
