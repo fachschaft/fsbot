@@ -20,8 +20,9 @@ class PrefixCommandMixin(b.BaseBot):
     async def handle(self, message: m.Message) -> None:
         if not message.msg:
             return
-        command = message.msg.split()[0].lower()
-        args = message.msg[len(command):].lstrip()
+        msg = message.msg.lstrip()
+        command = msg.split()[0].lower()
+        args = msg[len(command):].lstrip()
 
         for com in self._commands:
             if com.can_handle(command):
