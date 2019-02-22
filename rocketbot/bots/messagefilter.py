@@ -1,12 +1,12 @@
 import copy
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import rocketbot.bots.base as b
 import rocketbot.models as m
 
 
 class IgnoreOwnMsgMixin(b.BaseBot):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
         self.username: str = self._init_value(kwargs, 'username')
 
@@ -16,7 +16,7 @@ class IgnoreOwnMsgMixin(b.BaseBot):
 
 
 class MentionMixin(b.BaseBot):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
         self.username: str = self._init_value(kwargs, 'username')
 

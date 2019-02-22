@@ -1,14 +1,15 @@
 import re
+from typing import Any, Callable, TypeVar
 
 from rocketbot.models.rcdatetime import RcDatetime  # noqa: F401
 from rocketbot.models.apiobjects import Message, MessageType, RoleType, Room, RoomRef, RoomRef2, RoomType, UserRef  # noqa: F401
 from rocketbot.models.clientresults import *  # noqa: F401, F403
 
 
-def create(ctor, kwargs):
-    if kwargs is None:
-        return None
+T = TypeVar('T')
 
+
+def create(ctor: Callable[..., T], kwargs: Any) -> T:
     try:
         return ctor(**kwargs)
     except TypeError as e:

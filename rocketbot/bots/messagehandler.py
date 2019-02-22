@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import rocketbot.bots.base as b
 import rocketbot.models as m
@@ -6,7 +6,7 @@ import rocketbot.utils.usage as usage
 
 
 class PrefixCommandMixin(b.BaseBot):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
         self._commands = self._init_value(kwargs, 'commands')
         self._show_usage_on_unknown = self._init_value(kwargs, 'show_usage_on_unknown', default=True)
@@ -36,7 +36,7 @@ class PrefixCommandMixin(b.BaseBot):
 
 
 class CustomHandlerMixin(b.BaseBot):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
         self._callback = self._init_value(kwargs, 'callback')
 

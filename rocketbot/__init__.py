@@ -1,7 +1,9 @@
+from typing import Any, Dict
+
 import ejson
 
 
-def new_converter(data):
+def new_converter(data: Any) -> Dict[str, Any]:
     """Patch the ejson._converter because the data should
     be serialized as dict and not wrapped into
 

@@ -1,6 +1,6 @@
 import dataclasses
 from enum import Enum
-from typing import Optional, List, Any
+from typing import Callable, TypeVar, Optional, List, Any
 
 import ejson
 
@@ -17,7 +17,10 @@ def _serialize_enum(instance: Enum) -> dict:
     return instance.value
 
 
-def _init_list(_list, ctor):
+T = TypeVar('T')
+
+
+def _init_list(_list: List[Any], ctor: Callable[..., T]) -> List[T]:
     if _list is None or len(_list) == 0:
         return []
     return [models.create(ctor, el) for el in _list]

@@ -1,9 +1,11 @@
 import json
 import urllib.request
+from typing import Optional
+
 import bot_config as c
 
 
-async def get_food(days=None):
+async def get_food(days: Optional[int] = None) -> str:
     if days is None:
         days = 1
     url = c.MENSA_CACHE_URL + '/' + str(days)

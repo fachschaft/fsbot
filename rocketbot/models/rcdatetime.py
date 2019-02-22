@@ -1,6 +1,7 @@
 import datetime
 import pytz
 import pytz.tzinfo
+from typing import Any
 
 import ejson
 import tzlocal
@@ -23,25 +24,23 @@ class RcDatetime:
     """Datetime wrapper class which handles the timezone and rocketchat
     specific conversion stuff
     """
-    def __init__(self, value):
+    def __init__(self, value: datetime.datetime) -> None:
         self.value = value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.value.astimezone(_local_tz).isoformat()
 
     @staticmethod
-    def from_server(value):
+    def from_server(value: Any) -> 'RcDatetime':
         """Factory function for date objects from the server.
         Dateobjects from rocketchat look like this:
         date = { '$date': time_in_milliseconds_since_epoch}
         """
-        if value is None or '$date' not in value:
-            return None
         millis = value['$date']
         return RcDatetime(_millis_to_datetime(millis, _server_tz))
 
     @staticmethod
-    def now():
+    def now() -> 'RcDatetime':
         return RcDatetime(datetime.datetime.now())
 
     def is_today(self) -> bool:

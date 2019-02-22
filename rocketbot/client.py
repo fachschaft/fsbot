@@ -30,7 +30,7 @@ class Client:
 
     Implements all available rocketchat methods and subscriptions
     """
-    def __init__(self, address, loop):
+    def __init__(self, address: str, loop: asyncio.AbstractEventLoop) -> None:
         self.client = DDPClient(address)
         self.tasks: List[asyncio.Task] = []
         self.subscriptions: Dict[str, Subscription] = {}

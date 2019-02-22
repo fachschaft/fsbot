@@ -27,7 +27,7 @@ class PollCache:
     Additional feature:
     - Get last active poll by room id
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.by_id: Dict[str, Poll] = {}
         self.by_original_msg_id: Dict[str, Poll] = {}
         self.by_poll_msg_id: Dict[str, Poll] = {}
@@ -277,7 +277,7 @@ class Poll:
             self.additional_people.append(option)
 
     @property
-    def id(self):
+    def id(self) -> str:
         return self._id
 
     @id.setter
@@ -288,7 +288,7 @@ class Poll:
         self._id = value
 
     @property
-    def original_msg_id(self):
+    def original_msg_id(self) -> str:
         return self._original_msg_id
 
     @original_msg_id.setter

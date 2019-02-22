@@ -14,7 +14,7 @@ except ModuleNotFoundError:
 loop = asyncio.get_event_loop()
 
 
-async def go():
+async def go() -> None:
     while True:
         masterbot = master.Master(c.SERVER, c.BOTNAME, c.PASSWORD, loop)
 

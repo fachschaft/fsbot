@@ -1,9 +1,11 @@
+from typing import Any
+
 import rocketbot.bots.base as b
 import rocketbot.models as m
 
 
 class WhitelistRoomMixin(b.BaseBot):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
         self.rooms = set(self._init_value(kwargs, 'whitelist'))
 
@@ -14,7 +16,7 @@ class WhitelistRoomMixin(b.BaseBot):
 
 
 class BlacklistRoomMixin(b.BaseBot):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
         self.rooms = set(self._init_value(kwargs, 'blacklist'))
 
@@ -25,7 +27,7 @@ class BlacklistRoomMixin(b.BaseBot):
 
 
 class RoomTypeMixin(b.BaseBot):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
         self.enable_public_channel = self._init_value(kwargs, 'enable_public_channel', False)
         self.enable_private_group = self._init_value(kwargs, 'enable_private_group', False)

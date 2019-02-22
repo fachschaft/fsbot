@@ -25,7 +25,7 @@ class BaseBot(abc.ABC):
         """
         pass
 
-    def _init_value(self, kwargs, key, default=None):
+    def _init_value(self, kwargs: Any, key: str, default: Any = None) -> Any:
         if key in kwargs:
             return kwargs[key]
         if default is not None:

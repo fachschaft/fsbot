@@ -1,6 +1,6 @@
 import asyncio
 import re
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from rocketchat_API.rocketchat import RocketChat
 from rocketchat_API.APIExceptions.RocketExceptions import RocketConnectionException
@@ -12,7 +12,7 @@ import rocketbot.models as m
 
 
 class Master:
-    def __init__(self, url, username, password, loop=asyncio.get_event_loop()):
+    def __init__(self, url: str, username: str, password: str, loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()):
         base_url = re.sub('http[s]?://', '', url)
         self.client = client.Client(f'wss://{base_url}/websocket', loop)
         self.rest_api = RocketChat(user=username, password=password, server_url=url)
@@ -22,7 +22,7 @@ class Master:
         self._users_cache: Dict[str, m.UserRef] = {}
         self.bots: List[b.BaseBot] = []
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> 'Master':
         await self.client.connect()
         await self.client.login(self._username, self._password)
 
@@ -30,7 +30,7 @@ class Master:
 
         return self
 
-    async def __aexit__(self, exception_type, exception_value, traceback):
+    async def __aexit__(self, exception_type: Any, exception_value: Any, traceback: Any) -> None:
         await self.client.logout()
         self.client.disconnect()
 
