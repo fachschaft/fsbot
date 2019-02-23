@@ -1,6 +1,6 @@
 import asyncio
 import traceback
-from typing import Awaitable, Callable, List, Optional, Union, Dict
+from typing import Any, Awaitable, Callable, List, Optional, Union, Dict
 
 from ddp_asyncio import DDPClient
 from ddp_asyncio.subscription import Subscription
@@ -9,7 +9,7 @@ import rocketbot.exception as exp
 import rocketbot.models as m
 
 
-async def _subscription_cb_wrapper(col_q: asyncio.Queue, event_name: str, callback: Callable[[m.SubscriptionResult], Awaitable]) -> None:
+async def _subscription_cb_wrapper(col_q: asyncio.Queue[Any], event_name: str, callback: Callable[[m.SubscriptionResult], Awaitable[Any]]) -> None:
     """Wrapper for a subscription callback with handles incoming messages and adds a basic errorhandling
     """
     while True:
@@ -32,7 +32,7 @@ class Client:
     """
     def __init__(self, address: str, loop: asyncio.AbstractEventLoop) -> None:
         self.client = DDPClient(address)
-        self.tasks: List[asyncio.Task] = []
+        self.tasks: List[asyncio.Task[Any]] = []
         self.subscriptions: Dict[str, Subscription] = {}
         self.loop = loop
 
@@ -157,7 +157,7 @@ class Client:
         response = await self.client.call("sendMessage", {"rid": roomId, "msg": message})
         return m.create(m.Message, response)
 
-    async def update_message(self, message: Union[m.Message, dict]) -> None:
+    async def update_message(self, message: Union[m.Message, Dict[str, Any]]) -> None:
         """Update a message either by a message object or for partial updates only a
         dict with the relevant fields (_id is required)
         """
@@ -178,7 +178,7 @@ class Client:
         """
         await self.client.call("setReaction", emojiId, messageId, flag)
 
-    async def subscribe_room(self, roomId: str, callback: Callable[[m.SubscriptionResult], Awaitable]) -> Subscription:
+    async def subscribe_room(self, roomId: str, callback: Callable[[m.SubscriptionResult], Awaitable[Any]]) -> Subscription:
         """Subscribe for updates for the given room
         """
         col = self.client.get_collection('stream-room-messages')
@@ -192,7 +192,7 @@ class Client:
             self.subscriptions[roomId] = await self.client.subscribe("stream-room-messages", roomId, True)
         return self.subscriptions[roomId]
 
-    async def subscribe_my_messages(self, callback: Callable[[m.SubscriptionResult], Awaitable]) -> Subscription:
+    async def subscribe_my_messages(self, callback: Callable[[m.SubscriptionResult], Awaitable[Any]]) -> Subscription:
         """Subscribe to the personal '__my_messages__' topic which receives updates for:
         - all public channels (joined and unjoined)
         - all joined private groups

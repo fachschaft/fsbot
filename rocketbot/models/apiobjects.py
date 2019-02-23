@@ -1,18 +1,18 @@
 import dataclasses
 from enum import Enum
-from typing import Type, TypeVar, Optional, List, Any
+from typing import Type, TypeVar, Optional, List, Any, Dict
 
 import ejson
 
 import rocketbot.models as models
 
 
-def _serialize_dataclass(instance: object) -> dict:
+def _serialize_dataclass(instance: object) -> Dict[str, Any]:
     """Serialize a dataclass"""
     return dataclasses.asdict(instance)
 
 
-def _serialize_enum(instance: Enum) -> dict:
+def _serialize_enum(instance: Enum) -> Dict[str, Any]:
     """Serialite an enum"""
     return instance.value
 
@@ -138,8 +138,8 @@ class Message:
     alias: Optional[Any] = None
     avatar: Optional[str] = None  # Url to avatar
     emoji: Optional[Any] = None
-    customFields: Optional[dict] = None
-    reactions: Optional[dict] = None  # E.g. {':tada:': {'usernames': ['sm362']}}
+    customFields: Optional[Dict[str, Any]] = None
+    reactions: Optional[Dict[str, Any]] = None  # E.g. {':tada:': {'usernames': ['sm362']}}
     sandstormSessionId: Optional[Any] = None
     mentions: List[UserRef] = dataclasses.field(default_factory=list)
     channels: List['RoomRef'] = dataclasses.field(default_factory=list)
@@ -234,7 +234,7 @@ class Room:
     u: Optional[UserRef] = None  # Room owner
     lastMessage: Optional[Message] = None
     topic: Optional[str] = None
-    customFields: Optional[dict] = None
+    customFields: Optional[Dict[str, Any]] = None
     muted: Optional[List[str]] = None
     description: Optional[str] = None
     msgs: Optional[int] = None  # Number of msgs

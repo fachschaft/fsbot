@@ -350,7 +350,7 @@ class Poll:
         await master.client.update_message({'_id': self.poll_msg_id, 'msg': msg, 'reactions': self._get_reactions()})
         await master.client.update_message({'_id': self.status_msg_id, 'msg': _serialize_poll(self)})
 
-    def _get_reactions(self) -> Dict[str, dict]:
+    def _get_reactions(self) -> Dict[str, Dict[str, Any]]:
         """Get reactions by the current state
         """
         reactions = {}
@@ -365,7 +365,7 @@ class Poll:
 
         return reactions
 
-    def update_reactions(self, reactions: Optional[dict]) -> bool:
+    def update_reactions(self, reactions: Optional[Dict[str, Any]]) -> bool:
         """Update the poll with new reactions. Return value indicates
         if something changed
         """
@@ -401,7 +401,7 @@ class Poll:
                     self.user_to_number[u] += NUMBER_EMOJI_TO_VALUE[option.emoji]
         return update
 
-    def _get_usernames(self, reactions: Optional[dict], key: str) -> List[str]:
+    def _get_usernames(self, reactions: Optional[Dict[str, Any]], key: str) -> List[str]:
         if not reactions or key not in reactions:
             return []
         return reactions[key]['usernames']

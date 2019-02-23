@@ -2,7 +2,7 @@ import datetime
 import dateutil.parser
 import pytz
 import pytz.tzinfo
-from typing import overload, Any, Optional
+from typing import overload, Any, Optional, Dict
 
 import ejson
 import tzlocal
@@ -68,6 +68,6 @@ class RcDatetime:
 
 
 @ejson.register_serializer(RcDatetime)
-def _serialize_rcdatetime(instance: RcDatetime) -> dict:
+def _serialize_rcdatetime(instance: RcDatetime) -> Dict[str, float]:
     """Returns the value in the rocketchat date format"""
     return {"$date": _datetime_to_millis(instance.value.astimezone(_server_tz))}
