@@ -4,7 +4,7 @@ import datetime
 import json
 import re
 import shlex
-from typing import Any, Dict, Optional, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 import petname
 

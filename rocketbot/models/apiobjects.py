@@ -1,6 +1,6 @@
 import dataclasses
 from enum import Enum
-from typing import Type, TypeVar, Optional, List, Any, Dict
+from typing import Any, Dict, List, Optional, Type, TypeVar
 
 import ejson
 

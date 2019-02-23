@@ -1,6 +1,6 @@
 import asyncio
 import traceback
-from typing import Any, Awaitable, Callable, List, Optional, Union, Dict
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 
 from ddp_asyncio import DDPClient
 from ddp_asyncio.subscription import Subscription

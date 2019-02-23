@@ -1,8 +1,8 @@
 import abc  # Abstract Base Class
 from typing import List, Tuple
 
-import rocketbot.models as m
 import rocketbot.master as master
+import rocketbot.models as m
 
 
 class BaseCommand(abc.ABC):

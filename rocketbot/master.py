@@ -2,8 +2,9 @@ import asyncio
 import re
 from typing import Any, Dict, List
 
+from rocketchat_API.APIExceptions.RocketExceptions import \
+    RocketConnectionException
 from rocketchat_API.rocketchat import RocketChat
-from rocketchat_API.APIExceptions.RocketExceptions import RocketConnectionException
 
 import rocketbot.bots.base as b
 import rocketbot.client as client

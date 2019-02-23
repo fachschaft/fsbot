@@ -1,10 +1,10 @@
 import datetime
+from typing import Any, Dict, Optional, overload
+
 import dateutil.parser
+import ejson
 import pytz
 import pytz.tzinfo
-from typing import overload, Any, Optional, Dict
-
-import ejson
 import tzlocal
 
 import rocketbot.exception as exp

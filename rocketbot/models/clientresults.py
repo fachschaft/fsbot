@@ -1,5 +1,5 @@
 import dataclasses
-from typing import cast, List, Optional, Any
+from typing import Any, List, Optional, cast
 
 import rocketbot.models as models
 
