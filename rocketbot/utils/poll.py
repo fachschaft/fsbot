@@ -136,7 +136,9 @@ class PollManager:
 
     async def create(self, room_id: str, msg_id: str, title: str, options: List[str]) -> None:
         id = self.polls.new_id()
-        poll = Poll(botname=self.botname, original_msg_id=msg_id, title=title, vote_options=options, id=id, room_id=room_id)
+        poll = Poll(
+            botname=self.botname, original_msg_id=msg_id,
+            title=title, vote_options=options, id=id, room_id=room_id)
         await poll.send_new_poll_message(self.master, room_id, self.statusroom._id)
 
         room = await self.master.room(room_id)

@@ -9,7 +9,10 @@ import rocketbot.exception as exp
 import rocketbot.models as m
 
 
-async def _subscription_cb_wrapper(col_q: Any, event_name: str, callback: Callable[[m.SubscriptionResult], Awaitable[Any]]) -> None:
+async def _subscription_cb_wrapper(
+        col_q: Any, event_name: str,
+        callback: Callable[[m.SubscriptionResult], Awaitable[Any]]
+) -> None:
     """Wrapper for a subscription callback with handles incoming messages and adds a basic errorhandling
     """
     while True:
@@ -178,7 +181,10 @@ class Client:
         """
         await self.client.call("setReaction", emojiId, messageId, flag)
 
-    async def subscribe_room(self, roomId: str, callback: Callable[[m.SubscriptionResult], Awaitable[Any]]) -> Subscription:
+    async def subscribe_room(
+            self, roomId: str,
+            callback: Callable[[m.SubscriptionResult], Awaitable[Any]]
+    ) -> Subscription:
         """Subscribe for updates for the given room
         """
         col = self.client.get_collection('stream-room-messages')

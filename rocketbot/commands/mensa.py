@@ -14,7 +14,11 @@ class Mensa(c.BaseCommand):
     def usage(self) -> List[Tuple[str, str]]:
         return [
             ('essen | food', 'Show meals of the day'),
-            ('etm | etlm [<poll_option>...]', 'Shows meal of the day and creates a poll with the given options (default = 11:30) or adds the options to the poll'),
+            (
+                'etm | etlm [<poll_option>...]',
+                'Shows meal of the day and creates a poll with the given '
+                + 'options (default = 11:30) or adds the options to the poll'
+            ),
         ]
 
     def can_handle(self, command: str) -> bool:

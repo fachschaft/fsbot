@@ -80,7 +80,7 @@ ejson.REGISTRY[MessageType] = _serialize_enum
 
 @dataclasses.dataclass
 class Attachment:
-    ts: models.RcDatetime
+    ts: 'models.RcDatetime'
 
     # File attachment
     title: Optional[str] = None
@@ -120,18 +120,18 @@ ejson.REGISTRY[File] = _serialize_dataclass
 class Message:
     # Required fields
     _id: str
-    _updatedAt: models.RcDatetime  # timestamp when the msg got saved on the server
+    _updatedAt: 'models.RcDatetime'  # timestamp when the msg got saved on the server
     rid: str  # roomid
     msg: str
-    ts: models.RcDatetime  # msg creation timestamp (on client))
+    ts: 'models.RcDatetime'  # msg creation timestamp (on client))
     u: UserRef
     t: MessageType = MessageType.STANDARD_MESSAGE
 
     # Optional fields
-    editedAt: Optional[models.RcDatetime] = None
+    editedAt: Optional['models.RcDatetime'] = None
     editedBy: Optional[UserRef] = None
-    # [{'url': 'http://www.spiegel.de/wirtschaft/unternehmen/bierabsatz-steigt-erstmals-seit-jahren-a-1245601.html', 'meta': {'pageTitle': 'Bier: Absatz steigt wegen heißen Sommers erstmals seit Jahren - SPIEGEL ONLINE', 'ogLocale': 'de_DE', 'ogSiteName': 'SPIEGEL ONLINE', 'ogUrl': 'http://www.spiegel.de/wirtschaft/unternehmen/bierabsatz-steigt-erstmals-seit-jahren-a-1245601.html', 'ogType': 'article', 'ogTitle': 'Wegen heißen Sommers: Bierabsatz steigt erstmals seit Jahren - SPIEGEL ONLINE - Wirtschaft', 'ogDescription': 'Jahrelang schwächelte die Nachfrage nach deutschem Bier. Doch in diesem Jahr verkauften die Brauer dank des heißen Sommers wieder etwas mehr.', 'ogImage': 'http://cdn2.spiegel.de/images/image-1198681-860_poster_16x9-hrrg-1198681.jpg', 'twitterImage': 'http://cdn2.spiegel.de/images/image-1198681-860_poster_16x9-hrrg-1198681.jpg', 'description': 'Jahrelang schwächelte die Nachfrage nach deutschem Bier. Doch in diesem Jahr verkauften die Brauer dank des heißen Sommers wieder etwas mehr.'}, 'headers': {'contentType': 'text/html;charset=UTF-8', 'contentLength': '34157'}, 'parsedUrl': {'host': 'www.spiegel.de', 'hash': None, 'pathname': '/wirtschaft/unternehmen/bierabsatz-steigt-erstmals-seit-jahren-a-1245601.html', 'protocol': 'http:', 'port': None, 'query': None, 'search': None, 'hostname': 'www.spiegel.de'}}]
-    # [{'url': 'https://www.statistik.uni-freiburg.de/stat/stud', 'meta': {'pageTitle': 'Studierende — Statistik-Web'}, 'headers': {'contentType': 'text/html;charset=utf-8'}, 'parsedUrl': {'host': 'www.statistik.uni-freiburg.de', 'hash': None, 'pathname': '/stat/stud', 'protocol': 'https:', 'port': None, 'query': None, 'search': None, 'hostname': 'www.statistik.uni-freiburg.de'}}]
+    # noqa [{'url': 'http://www.spiegel.de/wirtschaft/unternehmen/bierabsatz-steigt-erstmals-seit-jahren-a-1245601.html', 'meta': {'pageTitle': 'Bier: Absatz steigt wegen heißen Sommers erstmals seit Jahren - SPIEGEL ONLINE', 'ogLocale': 'de_DE', 'ogSiteName': 'SPIEGEL ONLINE', 'ogUrl': 'http://www.spiegel.de/wirtschaft/unternehmen/bierabsatz-steigt-erstmals-seit-jahren-a-1245601.html', 'ogType': 'article', 'ogTitle': 'Wegen heißen Sommers: Bierabsatz steigt erstmals seit Jahren - SPIEGEL ONLINE - Wirtschaft', 'ogDescription': 'Jahrelang schwächelte die Nachfrage nach deutschem Bier. Doch in diesem Jahr verkauften die Brauer dank des heißen Sommers wieder etwas mehr.', 'ogImage': 'http://cdn2.spiegel.de/images/image-1198681-860_poster_16x9-hrrg-1198681.jpg', 'twitterImage': 'http://cdn2.spiegel.de/images/image-1198681-860_poster_16x9-hrrg-1198681.jpg', 'description': 'Jahrelang schwächelte die Nachfrage nach deutschem Bier. Doch in diesem Jahr verkauften die Brauer dank des heißen Sommers wieder etwas mehr.'}, 'headers': {'contentType': 'text/html;charset=UTF-8', 'contentLength': '34157'}, 'parsedUrl': {'host': 'www.spiegel.de', 'hash': None, 'pathname': '/wirtschaft/unternehmen/bierabsatz-steigt-erstmals-seit-jahren-a-1245601.html', 'protocol': 'http:', 'port': None, 'query': None, 'search': None, 'hostname': 'www.spiegel.de'}}]
+    # noqa [{'url': 'https://www.statistik.uni-freiburg.de/stat/stud', 'meta': {'pageTitle': 'Studierende — Statistik-Web'}, 'headers': {'contentType': 'text/html;charset=utf-8'}, 'parsedUrl': {'host': 'www.statistik.uni-freiburg.de', 'hash': None, 'pathname': '/stat/stud', 'protocol': 'https:', 'port': None, 'query': None, 'search': None, 'hostname': 'www.statistik.uni-freiburg.de'}}]
     # [{'url': 'https://chat.fachschaft.tf/channel/_uni?msg=115737d5-5ad6-485b-8dc7-4ee4fe01b858', 'ignoreParse': True}]
     urls: Optional[Any] = None
     attachments: List[Attachment] = dataclasses.field(default_factory=list)
@@ -144,7 +144,7 @@ class Message:
     mentions: List[UserRef] = dataclasses.field(default_factory=list)
     channels: List['RoomRef'] = dataclasses.field(default_factory=list)
     role: RoleType = RoleType.NONE
-    pinnedAt: Optional[models.RcDatetime] = None
+    pinnedAt: Optional['models.RcDatetime'] = None
     pinnedBy: Optional[UserRef] = None
     file: Optional[File] = None
 
@@ -225,7 +225,7 @@ ejson.REGISTRY[RoomRef2] = _serialize_dataclass
 class Room:
     # Required fields
     _id: str
-    _updatedAt: models.RcDatetime
+    _updatedAt: 'models.RcDatetime'
     t: RoomType
 
     # Optional fields
@@ -239,8 +239,8 @@ class Room:
     description: Optional[str] = None
     msgs: Optional[int] = None  # Number of msgs
     usersCount: Optional[int] = None
-    ts: Optional[models.RcDatetime] = None  # Creation timestamp
-    lm: Optional[models.RcDatetime] = None  # Timestamp of last message
+    ts: Optional['models.RcDatetime'] = None  # Creation timestamp
+    lm: Optional['models.RcDatetime'] = None  # Timestamp of last message
     usernames: Optional[List[str]] = None
 
     # Flags

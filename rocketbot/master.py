@@ -2,8 +2,9 @@ import asyncio
 import re
 from typing import Any, Dict, List
 
-from rocketchat_API.APIExceptions.RocketExceptions import \
+from rocketchat_API.APIExceptions.RocketExceptions import (
     RocketConnectionException
+)
 from rocketchat_API.rocketchat import RocketChat
 
 import rocketbot.bots.base as b
@@ -13,7 +14,10 @@ import rocketbot.models as m
 
 
 class Master:
-    def __init__(self, url: str, username: str, password: str, loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()):
+    def __init__(
+            self, url: str, username: str, password: str,
+            loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
+    ):
         base_url = re.sub('http[s]?://', '', url)
         self.client = client.Client(f'wss://{base_url}/websocket', loop)
         self.rest_api = RocketChat(user=username, password=password, server_url=url)
