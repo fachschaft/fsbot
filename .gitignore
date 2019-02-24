@@ -3,6 +3,7 @@ bot_config.py
 
 # Python
 **/__pycache__
+*.egg-info
 
 # VS Code
 .vscode

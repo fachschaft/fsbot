@@ -1,6 +1,6 @@
 aiohttp>=3.5.4
 ddp_asyncio>=0.3.0
-tzlocal>=1.5.1
-rocketchat_API>=0.6.26
 dmsclient>=1.5.1
 petname>=2.2
+rocketchat_API>=0.6.26
+tzlocal>=1.5.1
