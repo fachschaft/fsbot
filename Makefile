@@ -17,6 +17,10 @@ utest:
 itest:
 	pytest tests/integration
 
+test_cov:
+	pytest tests --cov=./
+	codecov
+
 mypy:
 	mypy .
 
