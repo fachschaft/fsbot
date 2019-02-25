@@ -2,15 +2,20 @@ FILES=*.py rocketbot tests
 
 all: mypy lint sort_import
 
-push: update test mypy lint verify_import
+push: update utest mypy lint verify_import itest
 	git push
 
 update:
 	pip install -r requirements.txt
 	pip install -r requirements.dev.txt
 
-test:
-	pytest
+test: utest itest
+
+utest:
+	pytest tests/unit
+
+itest:
+	pytest tests/integration
 
 mypy:
 	mypy .

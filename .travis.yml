@@ -2,18 +2,33 @@ dist: xenial
 
 language: python
 
-matrix:
-  include:
-  - python: "3.7"
-    env: STEP=test
-  - python: "3.7"
-    env: STEP=lint
-  - python: "3.7"
-    env: STEP=mypy
-  - python: "3.7"
-    env: STEP=verify_import
+python: "3.7"
+
+services:
+  - docker
+
+before_install:
+  - docker version
 
 install:
   - make update
 
-script: make $STEP
+jobs:
+  include:
+    # First stage
+    - stage: "Basic Tests"
+      name: "Unit Tests"
+      script: make utest
+    - name: "Typecheck"
+      script: make mypy
+    - name: "Lint"
+      script: make lint
+    - name: "Check import"
+      script: make verify_import
+    # Second stage
+    - stage: "Integration Tests"
+      script:
+        - docker-compose -f docker-compose-test-server.yml up -d
+        - docker ps
+        - until curl http://localhost:3000/api/v1/info; do sleep 5; echo "waiting for Rocket.Chat server to start"; done
+        - make itest
