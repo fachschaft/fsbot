@@ -16,7 +16,7 @@ loop = asyncio.get_event_loop()
 
 async def go() -> None:
     while True:
-        masterbot = master.Master(c.SERVER, c.BOTNAME, c.PASSWORD, loop)
+        masterbot = master.Master(c.SERVER, c.BOTNAME, c.PASSWORD, loop=loop)
 
         result = masterbot.rest_api.rooms_info(room_name=c.POLL_STATUS_ROOM).json()
         statusroom = m.create(m.Room, result['room'])
