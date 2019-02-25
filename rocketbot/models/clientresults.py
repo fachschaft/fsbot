@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses
 from typing import Any, List, Optional, cast
 
@@ -8,7 +10,7 @@ import rocketbot.models as models
 class LoginResult:
     id: str
     token: str
-    tokenExpires: 'models.RcDatetime'
+    tokenExpires: models.RcDatetime
     type: str
 
     def __post_init__(self) -> None:

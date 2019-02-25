@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 from typing import Any, Dict, Optional, overload
 
@@ -35,7 +37,7 @@ class RcDatetime:
 
     @overload  # noqa: F811, see https://github.com/PyCQA/pyflakes/issues/434
     @staticmethod
-    def from_server(value: 'RcDatetime') -> 'RcDatetime':
+    def from_server(value: RcDatetime) -> RcDatetime:
         pass
 
     @overload  # noqa: F811
@@ -44,7 +46,7 @@ class RcDatetime:
         pass
 
     @staticmethod  # noqa: F811
-    def from_server(value: Any) -> Optional['RcDatetime']:
+    def from_server(value: Any) -> Optional[RcDatetime]:
         """Factory function for date objects from the server.
         Dateobjects from rocketchat look like this:
         date = { '$date': time_in_milliseconds_since_epoch}
@@ -60,7 +62,7 @@ class RcDatetime:
         raise exp.RocketBotException(f'Unkown RcDatetime format: "{value}"')
 
     @staticmethod
-    def now() -> 'RcDatetime':
+    def now() -> RcDatetime:
         return RcDatetime(datetime.datetime.now())
 
     def is_today(self) -> bool:
