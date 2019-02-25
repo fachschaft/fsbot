@@ -18,7 +18,7 @@ itest:
 	pytest tests/integration
 
 test_cov:
-	pytest tests --cov=./
+	pytest tests --cov=rocketbot
 	codecov
 
 mypy:
