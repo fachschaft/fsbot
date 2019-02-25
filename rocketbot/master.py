@@ -15,12 +15,20 @@ import rocketbot.models as m
 
 class Master:
     def __init__(
-            self, url: str, username: str, password: str,
+            self, base_url: str, username: str, password: str, tls: bool = True,
             loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
     ):
-        base_url = re.sub('http[s]?://', '', url)
-        self.client = client.Client(f'wss://{base_url}/websocket', loop)
-        self.rest_api = RocketChat(user=username, password=password, server_url=url)
+        base_url = re.sub('http[s]?://', '', base_url)
+
+        if tls:
+            ws_url = f'wss://{base_url}/websocket'
+            rest_url = f'https://{base_url}'
+        else:
+            ws_url = f'ws://{base_url}/websocket'
+            rest_url = f'http://{base_url}'
+
+        self.client = client.Client(ws_url, loop)
+        self.rest_api = RocketChat(user=username, password=password, server_url=rest_url)
         self._username = username
         self._password = password
         self._rooms_cache: Dict[str, m.Room] = {}
