@@ -45,7 +45,7 @@ class Master:
 
     async def __aexit__(self, exception_type: Any, exception_value: Any, traceback: Any) -> None:
         await self.client.logout()
-        self.client.disconnect()
+        await self.client.disconnect()
 
     async def room(self, room_id: str) -> m.Room:
         if room_id not in self._rooms_cache:

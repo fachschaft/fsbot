@@ -49,11 +49,12 @@ class Client:
         """
         await self.client.disconnection()
 
-    def disconnect(self) -> None:
+    async def disconnect(self) -> None:
         """Disconnect by caneling all running tasks
         """
         for task in self.tasks:
             task.cancel()
+        await self.client.disconnect()
 
     async def login(self, username: str, password: str) -> m.LoginResult:
         """Login with the given credentials"""
