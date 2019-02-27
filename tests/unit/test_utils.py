@@ -3,7 +3,12 @@ import unittest.mock as mock
 import pytest
 from asynctest import CoroutineMock, patch
 
-import rocketbot.utils.meals as meals
+from .. import patch_module
+
+mock_bot_config = mock.MagicMock()
+mock_bot_config.MENSA_CACHE_URL = 'test'
+with patch_module('bot_config', mock_bot_config):
+    import rocketbot.utils.meals as meals
 
 MEAL_DATA = [
     {"day 1": [{"meals": ["Kichererbsenpolenta"]}, {"meals": ["Schweinesteak"]}]},
