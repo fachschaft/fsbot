@@ -1,9 +1,45 @@
+import datetime
 from typing import Any, List, Tuple
 
 import rocketbot.commands as c
 import rocketbot.models as m
 import rocketbot.utils.meals as meals
 import rocketbot.utils.poll as pollutil
+
+
+async def _food_msg_by_day(day: int) -> str:
+    """Return the food msg by day where monday=0, ..."""
+    offset = (day - datetime.datetime.today().weekday()) % 7
+    return await meals.get_food(offset, 1)
+
+
+async def _food_command(args: str) -> str:
+    """Reply with the meals of the specified day
+
+    Possible arguments:
+    - empty args -> show meal of today
+    - args = n in [1..x]  show meals of n future days
+    - args = 'heute', 'morgen', 'montag', ...
+    """
+    args = args.strip().lower()
+    if args.isnumeric():
+        foodmsg = await meals.get_food(0, int(args))
+    elif len(args) == 0 or args in ['heute', 'today']:
+        foodmsg = await meals.get_food(0, 1)
+    elif args in ['morgen', 'tomorrow']:
+        foodmsg = await meals.get_food(1, 1)
+    elif args in ['montag', 'monday']:
+        foodmsg = await _food_msg_by_day(0)
+    elif args in ['dienstag', 'tuesday']:
+        foodmsg = await _food_msg_by_day(1)
+    elif args in ['mittwoch', 'wednesday']:
+        foodmsg = await _food_msg_by_day(2)
+    elif args in ['donnerstag', 'thursday']:
+        foodmsg = await _food_msg_by_day(3)
+    elif args in ['freitag', 'friday']:
+        foodmsg = await _food_msg_by_day(4)
+
+    return foodmsg
 
 
 class Mensa(c.BaseCommand):
@@ -13,9 +49,11 @@ class Mensa(c.BaseCommand):
 
     def usage(self) -> List[Tuple[str, str]]:
         return [
-            ('essen | food', 'Show meals of the day'),
             (
-                'etm | etlm [<poll_option>...]',
+                '<essen | food> [<n | today | tomorrow | monday .. friday> ]',
+                'Show meals of the day, of the next "n" days or on a specific day'
+            ), (
+                '<etm | etlm> [<poll_option>...]',
                 'Shows meal of the day and creates a poll with the given '
                 + 'options (default = 11:30) or adds the options to the poll'
             ),
@@ -30,7 +68,8 @@ class Mensa(c.BaseCommand):
         """Handle the incoming message
         """
         if command in ['essen', 'food']:
-            await self.food_command(args, message)
+            msg = await _food_command(args)
+            await self.master.client.send_message(message.rid, msg)
         if command in ['etm', 'etlm']:
             poll = self.pollmanager.polls.get(room_id=message.rid)
             poll_options = pollutil.parse_args(args)
@@ -42,23 +81,9 @@ class Mensa(c.BaseCommand):
             else:
                 if len(poll_options) == 0:
                     poll_options.append('11:30')
-                await self.food_command("", message)
+                msg = await _food_command("")
+                await self.master.client.send_message(message.rid, msg)
                 await self.pollmanager.create(message.rid, message._id, 'ETM', poll_options)
-
-    async def food_command(self, args: str, msg: m.Message) -> None:
-        """Reply with the meals of the day.
-
-        Possible extentions:
-        - args = n in [1..x]  show meals of n futur days
-        - args = 'heute', 'morgen', 'montag', ...
-        - after 14:00 -> show meal of next day as default
-        - schedule task which sends message with meals every day at 9/10(?)
-        """
-        try:
-            foodmsg = await meals.get_food(int(args))
-        except ValueError:
-            foodmsg = await meals.get_food()
-        await self.master.client.send_message(msg.rid, foodmsg)
 
     async def etx_command(self, etx: str, args: str, msg: m.Message) -> None:
         """To be implemented

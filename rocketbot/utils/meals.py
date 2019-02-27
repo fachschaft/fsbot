@@ -1,25 +1,40 @@
-import json
-import urllib.request
-from typing import Optional
+import aiohttp
 
 import bot_config as c
 
 
-async def get_food(days: Optional[int] = None) -> str:
-    if days is None:
-        days = 1
-    url = c.MENSA_CACHE_URL + '/' + str(days)
+async def get_food(offset: int, num_meals: int) -> str:
+    """Get the food which will be served
 
-    with urllib.request.urlopen(url) as url_obj:
-        data = json.loads(url_obj.read().decode())
+    Offset defines the first meal which will be in the result
+    offset = 0 -> today
+    offset = 1 -> tomorrow
 
-    foodmsg = "```\n"
-    for day in data:
-        foodmsg += day + "\n"
-        for i, meal in enumerate(data[day]):
-            foodmsg += "  Meal: " + str(i) + "\n"
+    Num_meals defines the number of meals which will be in the result
+
+    Examles:
+    Food for today -> get_food(0, 1)
+    Food for the week -> get_food(0, 7)
+    Food for tomorrow and the day after -> get_food(1, 2)
+    """
+    url = c.MENSA_CACHE_URL + '/' + str(offset + num_meals)
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            data = await resp.json()
+
+    foodmsg = ['```']
+    for i, (day, meals) in enumerate(data.items()):
+        if i < offset:
+            continue
+        foodmsg.append(day)
+        for j, meal in enumerate(meals):
+            foodmsg.append(f'  Meal: {j+1}')
             for line in meal['meals']:
-                foodmsg += "    " + line + "\n"
-    foodmsg += "```\n"
+                foodmsg.append(f'    {line}')
 
-    return foodmsg
+    if len(foodmsg) == 1:
+        foodmsg.append('No meals received.')
+    foodmsg.append('```')
+
+    return '\n'.join(foodmsg)
