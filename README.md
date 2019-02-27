@@ -1,6 +1,6 @@
 # Rocketbot
 
-[![Build Status](https://travis-ci.org/fachschaft/rocketbot.svg?branch=master)](https://travis-ci.org/fachschaft/rocketbot)
+[![Build Status](https://travis-ci.org/fachschaft/rocketbot.svg?branch=master)](https://travis-ci.org/fachschaft/rocketbot) [![codecov](https://codecov.io/gh/fachschaft/rocketbot/branch/master/graph/badge.svg)](https://codecov.io/gh/fachschaft/rocketbot)
 
 This repository contains a [Rocket.Chat](https://github.com/RocketChat/Rocket.Chat) bot based on the [realtime api](https://rocket.chat/docs/developer-guides/realtime-api/).
 
