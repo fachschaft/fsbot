@@ -26,7 +26,8 @@ async def go() -> None:
         ping = com.Ping(master=masterbot)
         poll = com.Poll(master=masterbot, pollmanager=pollmanager)
         dms = com.Dms(master=masterbot, token=c.DMS_TOKEN)
-        mensa = com.Mensa(master=masterbot, pollmanager=pollmanager)
+        etm = com.Etm(master=masterbot, pollmanager=pollmanager)
+        food = com.Food(master=masterbot)
 
         # Public command bot
         masterbot.bots.append(
@@ -39,12 +40,12 @@ async def go() -> None:
             bots.RoomTypeCommandBot(
                 master=masterbot, username=c.BOTNAME,
                 enable_direct_message=True,
-                commands=[usage, ping, dms]))
+                commands=[usage, ping, dms, food]))
         # Mensa bot
         masterbot.bots.append(
             bots.RoomCommandBot(
                 master=masterbot, username=c.BOTNAME,
-                whitelist=[c.MENSA_ROOM], commands=[mensa],
+                whitelist=[c.MENSA_ROOM], commands=[etm],
                 show_usage_on_unknown=False
             ))
 

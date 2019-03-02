@@ -17,15 +17,18 @@ async def get_food(offset: int, num_meals: int) -> str:
     Food for the week -> get_food(0, 7)
     Food for tomorrow and the day after -> get_food(1, 2)
     """
-    url = c.MENSA_CACHE_URL + '/' + str(offset + num_meals)
+    url1 = c.MENSA_CACHE_URL + '/' + str(offset)
+    url2 = c.MENSA_CACHE_URL + '/' + str(offset + num_meals)
 
     async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-            data = await resp.json()
+        async with session.get(url1) as resp:
+            data1 = await resp.json()
+        async with session.get(url2) as resp:
+            data2 = await resp.json()
 
     foodmsg = ['```']
-    for i, (day, meals) in enumerate(data.items()):
-        if i < offset:
+    for i, (day, meals) in enumerate(data2.items()):
+        if i < len(data1):
             continue
         foodmsg.append(day)
         for j, meal in enumerate(meals):

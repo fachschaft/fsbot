@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, List, Tuple
+from typing import Any, List, Optional, Tuple
 
 import rocketbot.commands as c
 import rocketbot.models as m
@@ -13,7 +13,7 @@ async def _food_msg_by_day(day: int) -> str:
     return await meals.get_food(offset, 1)
 
 
-async def _food_command(args: str) -> str:
+async def _food_command(args: str) -> Optional[str]:
     """Reply with the meals of the specified day
 
     Possible arguments:
@@ -38,11 +38,40 @@ async def _food_command(args: str) -> str:
         foodmsg = await _food_msg_by_day(3)
     elif args in ['freitag', 'friday']:
         foodmsg = await _food_msg_by_day(4)
-
+    else:
+        return None
     return foodmsg
 
 
-class Mensa(c.BaseCommand):
+class Food(c.BaseCommand):
+    def usage(self) -> List[Tuple[str, str]]:
+        return [
+            (
+                '<essen | food> [ <n | today | tomorrow | monday .. friday> ]',
+                'Show meals of the day, of the next "n" days or on a specific day'
+            ),
+        ]
+
+    def can_handle(self, command: str) -> bool:
+        """Check whether the command is applicable
+        """
+        return command in ['essen', 'food']
+
+    async def handle(self, command: str, args: str, message: m.Message) -> None:
+        """Handle the incoming message
+        """
+        if command in ['essen', 'food']:
+            msg = await _food_command(args)
+            if msg is None:
+                com, desc = self.usage()[0]
+                await self.master.client.send_message(
+                    message.roomid,
+                    f'*Usage:*\n```{com}\n    {desc}```')
+            else:
+                await self.master.client.send_message(message.roomid, msg)
+
+
+class Etm(c.BaseCommand):
     def __init__(self, pollmanager: pollutil.PollManager, **kwargs: Any):
         super().__init__(**kwargs)
         self.pollmanager = pollmanager
@@ -50,9 +79,6 @@ class Mensa(c.BaseCommand):
     def usage(self) -> List[Tuple[str, str]]:
         return [
             (
-                '<essen | food> [<n | today | tomorrow | monday .. friday> ]',
-                'Show meals of the day, of the next "n" days or on a specific day'
-            ), (
                 '<etm | etlm> [<poll_option>...]',
                 'Shows meal of the day and creates a poll with the given '
                 + 'options (default = 11:30) or adds the options to the poll'
@@ -62,14 +88,11 @@ class Mensa(c.BaseCommand):
     def can_handle(self, command: str) -> bool:
         """Check whether the command is applicable
         """
-        return command in ['essen', 'food', 'etm', 'etlm']
+        return command in ['etm', 'etlm']
 
     async def handle(self, command: str, args: str, message: m.Message) -> None:
         """Handle the incoming message
         """
-        if command in ['essen', 'food']:
-            msg = await _food_command(args)
-            await self.master.client.send_message(message.roomid, msg)
         if command in ['etm', 'etlm']:
             poll = self.pollmanager.polls.get(room_id=message.roomid)
             poll_options = pollutil.parse_args(args)
@@ -82,15 +105,6 @@ class Mensa(c.BaseCommand):
                 if len(poll_options) == 0:
                     poll_options.append('11:30')
                 msg = await _food_command("")
-                await self.master.client.send_message(message.roomid, msg)
+                if msg is not None:
+                    await self.master.client.send_message(message.roomid, msg)
                 await self.pollmanager.create(message.roomid, message.id, 'ETM', poll_options)
-
-    async def etx_command(self, etx: str, args: str, msg: m.Message) -> None:
-        """To be implemented
-
-        Possbile functions
-        - ETM/ETLM/ET[whatever] -> start poll if there is none for today. Otherwise add option
-        - if poll and option exists, add user to participants (?, to be discussed)
-        - scan for ++ (?, to be discussed)
-        """
-        pass
