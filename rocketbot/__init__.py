@@ -1,3 +1,4 @@
+import dataclasses
 from typing import Any, Dict
 
 import ejson
@@ -15,6 +16,9 @@ def new_converter(data: Any) -> Dict[str, Any]:
     handler = ejson.REGISTRY.get(data.__class__)
     if handler:
         return handler(data)
+    # Special case for dataclasses as the already have a designated serialization method
+    if dataclasses.is_dataclass(data):
+        return dataclasses.asdict(data)
     raise TypeError(repr(data) + " is not JSON serializable")
 
 

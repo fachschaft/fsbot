@@ -9,11 +9,6 @@ import ejson
 import rocketbot.models as models
 
 
-def _serialize_dataclass(instance: object) -> Dict[str, Any]:
-    """Serialize a dataclass"""
-    return dataclasses.asdict(instance)
-
-
 def _serialize_enum(instance: Enum) -> Dict[str, Any]:
     """Serialite an enum"""
     return instance.value
@@ -28,21 +23,11 @@ def _init_list(_list: List[Any], ctor: Type[T]) -> List[T]:
     return [models.create(ctor, el) for el in _list]
 
 
-# Possible wrapper for dataclasses. Ensures registration with ejson.
-# Creates some problems with mypy
-# def _dataclass_wrapper(cls_):
-#     ejson.REGISTRY[cls_] = _serialize_dataclass
-#     return dataclasses.dataclass(cls_)
-
-
 @dataclasses.dataclass
 class UserRef:
     _id: str
     username: str  # Unique name (@...)
     name: Optional[str] = None  # Display name
-
-
-ejson.REGISTRY[UserRef] = _serialize_dataclass
 
 
 class RoleType(Enum):
@@ -105,17 +90,11 @@ class Attachment:
             self.attachments = [models.create(Attachment, a) for a in self.attachments]
 
 
-ejson.REGISTRY[Attachment] = _serialize_dataclass
-
-
 @dataclasses.dataclass
 class File:
     _id: str
     name: str
     type: str
-
-
-ejson.REGISTRY[File] = _serialize_dataclass
 
 
 @dataclasses.dataclass
@@ -187,9 +166,6 @@ class Message:
             print('Sandstormsessionid arg found:', self.sandstormSessionId)
 
 
-ejson.REGISTRY[Message] = _serialize_dataclass
-
-
 class RoomType(Enum):
     PUBLIC = 'c'
     DIRECT = 'd'
@@ -206,9 +182,6 @@ class RoomRef:
     name: str
 
 
-ejson.REGISTRY[RoomRef] = _serialize_dataclass
-
-
 @dataclasses.dataclass
 class RoomRef2:
     """Necessary because there is no single way to reference a room"""
@@ -218,9 +191,6 @@ class RoomRef2:
 
     def __post_init__(self) -> None:
         self.roomType = RoomType(self.roomType)
-
-
-ejson.REGISTRY[RoomRef2] = _serialize_dataclass
 
 
 @dataclasses.dataclass
@@ -267,6 +237,3 @@ class Room:
 
     def to_roomref2(self, is_participant: bool) -> RoomRef2:
         return RoomRef2(roomType=self.t, roomName=self.name, roomParticipant=is_participant)
-
-
-ejson.REGISTRY[Room] = _serialize_dataclass
