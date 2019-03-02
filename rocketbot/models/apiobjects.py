@@ -164,10 +164,10 @@ class Room:
 
     def __post_init__(self) -> None:
         self._updatedAt = m.create(m.RcDatetime, self._updatedAt)
-        self.ts = m.create(m.RcDatetime, self.ts)
-        self.lm = m.create(m.RcDatetime, self.lm)
-        self.t = m.RoomType(self.t)
-        self.u = m.create(UserRef, self.u)
+        self.ts = m.try_create(m.RcDatetime, self.ts)
+        self.lm = m.try_create(m.RcDatetime, self.lm)
+        self.t = m.create(m.RoomType, self.t)
+        self.u = m.try_create(UserRef, self.u)
         self.lastMessage = m.try_create(Message, self.lastMessage)
 
     def to_roomref(self) -> RoomRef:
