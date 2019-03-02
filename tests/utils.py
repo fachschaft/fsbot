@@ -1,5 +1,7 @@
 import builtins
 import contextlib
+import random
+import string
 import unittest.mock as mock
 from typing import Any, Callable, Iterator
 
@@ -18,3 +20,7 @@ def _import_mock(module: str, mock_module: Any) -> Callable[..., Any]:
 def patch_module(module: str, mock_module: Any) -> Iterator[Any]:
     with mock.patch('builtins.__import__', side_effect=_import_mock(module, mock_module)):
         yield
+
+
+def random_string(len_: int) -> str:
+    return ''.join(random.choices(string.ascii_letters, k=len_))
