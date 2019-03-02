@@ -14,7 +14,7 @@ class LoginResult:
     type: str
 
     def __post_init__(self) -> None:
-        self.tokenExpires = models.RcDatetime.from_server(self.tokenExpires)
+        self.tokenExpires = models.create(models.RcDatetime, self.tokenExpires)
 
 
 @dataclasses.dataclass

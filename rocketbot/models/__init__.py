@@ -1,50 +1,40 @@
-import re
+import dataclasses
+
 from typing import Any, Dict, Optional, Type, TypeVar, overload
 
+import rocketbot.exception as exp
+from rocketbot.models.enums import (MessageType, RoleType, RoomType)
+
 from rocketbot.models.apiobjects import (
-    Attachment, File, Message, MessageType, RoleType, Room, RoomRef, RoomRef2,
-    RoomType, UserRef
+    Attachment, File, Message, Room, RoomRef, RoomRef2,
+    UserRef
 )
 from rocketbot.models.clientresults import (
     GetRoomsResult, LoadHistoryResult, LoginResult, SubscriptionResult
 )
 from rocketbot.models.rcdatetime import RcDatetime
 
-T = TypeVar('T', Message, Room, UserRef, File, RoomRef2, Attachment)
+T = TypeVar('T')
 
 
-@overload
-def create(ctor: Any, kwargs: None) -> None:
-    ...
+def create(cls_: Type[T], value: Any, *, default: Optional[T] = None) -> T:
+    """Create an object if value is not None. Otherwise return default if given or
+    raise an exception
+    """
+    print(f'In create: {value}')
+    if value is not None:
+        if dataclasses.is_dataclass(cls_):
+            return cls_(**value)
+        else:
+            return cls_(value)
+    if default is not None:
+        return default
+    raise exp.RocketBotException(f'Unable to create {cls_.__class__.__name__}')
 
 
-@overload
-def create(ctor: Type[T], kwargs: Dict[str, Any]) -> T:
-    ...
-
-
-@overload
-def create(ctor: Type[T], kwargs: T) -> T:
-    ...
-
-
-def create(ctor: Type[T], kwargs: Any) -> Optional[T]:
-    if kwargs is None:
+def try_create(cls_: Type[T], value: Any) -> Optional[T]:
+    """Try creating an object if value is not None. If value is None return None
+    """
+    if value is None:
         return None
-    try:
-        return ctor(**kwargs)
-    except TypeError as e:
-        pattern = r'__init__\(\) got an unexpected keyword argument \'([^\']+)\''
-        m = re.match(pattern, e.__str__())
-        if not m:
-            raise e
-        key = m.group(1)
-        print(f"Unexpected key '{key}' for {ctor.__name__}. Value was '{kwargs[key]}''")
-        del kwargs[key]
-        return create(ctor, kwargs)
-    except ValueError as e:
-        value = e.__str__().split("'")[1]
-        key = [k for (k, v) in kwargs.items() if v == value][0]
-        print(f"Unexpected value '{value}' for '{key}' in {ctor.__name__}")
-        del kwargs[key]
-        return create(ctor, kwargs)
+    return create(cls_, value)
