@@ -1,4 +1,5 @@
 import dataclasses
+import enum
 from typing import Any, Dict
 
 import ejson
@@ -19,6 +20,9 @@ def new_converter(data: Any) -> Dict[str, Any]:
     # Special case for dataclasses as the already have a designated serialization method
     if dataclasses.is_dataclass(data):
         return dataclasses.asdict(data)
+    # Special case for enums
+    if isinstance(data, enum.Enum):
+        return data.value
     raise TypeError(repr(data) + " is not JSON serializable")
 
 

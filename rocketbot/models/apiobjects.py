@@ -4,15 +4,7 @@ import dataclasses
 from enum import Enum
 from typing import Any, Dict, List, Optional, Type, TypeVar
 
-import ejson
-
 import rocketbot.models as models
-
-
-def _serialize_enum(instance: Enum) -> Dict[str, Any]:
-    """Serialite an enum"""
-    return instance.value
-
 
 T = TypeVar('T')
 
@@ -33,9 +25,6 @@ class UserRef:
 class RoleType(Enum):
     NONE = 'none'
     OWNER = 'owner'
-
-
-ejson.REGISTRY[RoleType] = _serialize_enum
 
 
 class MessageType(Enum):
@@ -60,9 +49,6 @@ class MessageType(Enum):
     USER_REMOVED = 'ru'
     USER_UNMUTED = 'user-unmuted'
     WECOME = 'wm'
-
-
-ejson.REGISTRY[MessageType] = _serialize_enum
 
 
 @dataclasses.dataclass
@@ -171,9 +157,6 @@ class RoomType(Enum):
     DIRECT = 'd'
     PRIVATE = 'p'
     LIVE = 'l'
-
-
-ejson.REGISTRY[RoomType] = _serialize_enum
 
 
 @dataclasses.dataclass
