@@ -59,7 +59,7 @@ class Client:
     async def login(self, username: str, password: str) -> m.LoginResult:
         """Login with the given credentials"""
         response = await self.client.call("login", {"user": {"username": username}, "password": password})
-        return m.LoginResult(**response)
+        return m.create(m.LoginResult, response)
 
     async def logout(self) -> None:
         """Logout"""

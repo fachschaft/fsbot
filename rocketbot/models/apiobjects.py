@@ -62,7 +62,47 @@ class ParsedUrl:
     search: Optional[str] = None
 
 
-class Message:
+class ApiObject:
+    # Must be overwritten in subclass
+    mapping: Dict[str, str]
+
+    def asdict(self) -> Dict[str, Any]:
+        return {
+            key: self.__getattribute__(mapped_key)
+            for key, mapped_key in self.__class__.mapping.items()
+            if self.__getattribute__(mapped_key) is not None
+        }
+
+    def __repr__(self) -> str:
+        attr = (f'{key}={value}' for key, value in self.__dict__.items() if value is not None)
+        return f'{self.__class__.__name__}({", ".join(attr)})'
+
+
+class Message(ApiObject):
+    mapping = {
+        '_id': 'id',
+        'rid': 'roomid',
+        'msg': 'msg',
+        'ts': 'created_at',
+        'u': 'created_by',
+        '_updatedAt': 'updated_at',
+        'editedAt': 'edited_at',
+        'editedBy': 'edited_by',
+        'pinnedAt': 'pinned_at',
+        'pinnedBy': 'pinned_by',
+        't': 'message_type',
+        'role': 'role_type',
+        'attachments': 'attachments',
+        'channels': 'channels',
+        'mentions': 'mentions',
+        'urls': 'urls',
+        'reactions': 'reactions',
+        'file': 'file',
+        'groupable': 'groupable',
+        'parseUrls': 'parseUrls',
+        'pinned': 'pinned',
+    }
+
     def __init__(self, kwargs: Any) -> None:
         self.id: str = kwargs['_id']
         self.roomid: str = kwargs['rid']

@@ -5,6 +5,15 @@ import pytest
 from rocketchat_API.rocketchat import RocketChat
 
 import rocketbot.client as client
+import rocketbot.models as m
+
+
+def setup_module() -> None:
+    m.STRICT_MODE = True
+
+
+def teardown_module() -> None:
+    m.STRICT_MODE = False
 
 
 @pytest.yield_fixture
