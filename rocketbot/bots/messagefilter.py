@@ -11,7 +11,7 @@ class IgnoreOwnMsgMixin(b.BaseBot):
         self.username: str = self._init_value(kwargs, 'username')
 
     async def handle(self, message: m.Message) -> None:
-        if message.u.username != self.username:
+        if message.created_by.username != self.username:
             await super().handle(message)
 
 

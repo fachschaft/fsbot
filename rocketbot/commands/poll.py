@@ -27,11 +27,11 @@ class Poll(c.BaseCommand):
         if command == 'poll':
             await self.create_poll(args, message)
         if command == 'poll_push':
-            await self.pollmanager.push(message.rid, message._id)
+            await self.pollmanager.push(message.roomid, message.id)
 
     async def create_poll(self, args: str, message: m.Message) -> None:
         args_list = pollutil.parse_args(args)
         if len(args_list) > 1:
-            await self.pollmanager.create(message.rid, message._id, args_list[0], args_list[1:])
+            await self.pollmanager.create(message.roomid, message.id, args_list[0], args_list[1:])
         else:
-            await self.master.client.send_message(message.rid, f'*Usage:*\n```{self.usage()}```')
+            await self.master.client.send_message(message.roomid, f'*Usage:*\n```{self.usage()}```')

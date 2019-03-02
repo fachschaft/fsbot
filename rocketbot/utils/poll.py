@@ -163,12 +163,12 @@ class PollManager:
         self.polls.add(poll)
 
     async def _poll_callback(self, message: m.Message) -> None:
-        msg_id = message._id
+        msg_id = message.id
         if msg_id in self.polls.by_original_msg_id:
             if not message.msg:
                 poll = self.polls.remove(original_msg_id=msg_id)
 
-                room = await self.master.room(message.rid)
+                room = await self.master.room(message.roomid)
                 if room.name:
                     self.roomBot.rooms.discard(room.name)
 
@@ -182,30 +182,30 @@ class PollManager:
 
     async def _status_callback(self, message: m.Message) -> None:
         # Handle only own messages
-        if message.u.username != self.botname:
+        if message.created_by.username != self.botname:
             return
         # Handle only messages edited by someone else
-        if not message.editedBy or message.editedBy.username == self.botname:
+        if not message.edited_by or message.edited_by.username == self.botname:
             return
 
         poll: Optional[Poll]
         if message.msg:
             try:
                 poll = _deserialize_poll(message.msg)
-                poll.status_msg_id = message._id
+                poll.status_msg_id = message.id
 
                 # We don't know what was changed so readd the poll to the cache and resend it
-                self.polls.remove(status_msg_id=message._id)
+                self.polls.remove(status_msg_id=message.id)
                 self.polls.add(poll)
                 await poll.resend_old_message(self.master)
             except json.decoder.JSONDecodeError:
-                poll = self.polls.get(status_msg_id=message._id)
+                poll = self.polls.get(status_msg_id=message.id)
                 if poll:
                     await self.master.client.update_message({'_id': poll.status_msg_id, 'msg': _serialize_poll(poll)})
 
         else:
             # We don't know what was changed so readd the poll to the cache and resend it
-            poll = self.polls.remove(status_msg_id=message._id)
+            poll = self.polls.remove(status_msg_id=message.id)
             await self.master.client.delete_message(poll.poll_msg_id)
 
 
@@ -331,12 +331,12 @@ class Poll:
         """
         msg = await self.to_message(master)
         poll_msg = await master.client.send_message(room_id, msg)
-        self.poll_msg_id = poll_msg._id
+        self.poll_msg_id = poll_msg.id
         await master.client.update_message({'_id': self.poll_msg_id, 'reactions': self._get_reactions()})
 
         if self._status_msg_id is None:
             status_msg = await master.client.send_message(statusroom_id, _serialize_poll(self))
-            self.status_msg_id = status_msg._id
+            self.status_msg_id = status_msg.id
         else:
             await master.client.update_message({'_id': self.status_msg_id, 'msg': _serialize_poll(self)})
 

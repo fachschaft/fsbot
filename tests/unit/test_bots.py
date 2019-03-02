@@ -7,8 +7,6 @@ import rocketbot.bots.base as base
 import rocketbot.bots.messagefilter as mf
 import rocketbot.models as m
 
-from ..fixtures import *
-
 
 class BaseBot(base.BaseBot):
     def __init__(self, **kwargs: Any) -> None:
@@ -109,7 +107,7 @@ class IgnoreOwnMsgBot(mf.IgnoreOwnMsgMixin, BaseBot):
 async def test_ignoreownmsgbot_with_own_msg(message: m.Message) -> None:
     username = 'testuser'
     bot = IgnoreOwnMsgBot(master=None, username=username)
-    message.u = m.UserRef(_id='id', username=username, name='Test')
+    message.created_by = m.UserRef(_id='id', username=username, name='Test')
 
     await bot.handle(message)
 
@@ -120,7 +118,7 @@ async def test_ignoreownmsgbot_with_own_msg(message: m.Message) -> None:
 async def test_ignoreownmsgbot_with_foreign_msg(message: m.Message) -> None:
     username = 'testuser'
     bot = IgnoreOwnMsgBot(master=None, username=username + '!')
-    message.u = m.UserRef(_id='id', username=username, name='Test')
+    message.created_by = m.UserRef(_id='id', username=username, name='Test')
 
     await bot.handle(message)
 

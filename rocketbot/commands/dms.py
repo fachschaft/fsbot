@@ -36,7 +36,7 @@ class Dms(c.BaseCommand):
         if argv[0] in ('order', 'buy', 'comment'):
             userargv = [arg for arg in argv if arg.startswith('-u') or arg.startswith('--user')]
             if len(userargv) == 0:
-                userid = message.u.username
+                userid = message.created_by.username
                 argv.append('--user={}'.format(userid))
         if argv[0] in ('order', 'buy'):
             if '--force' not in argv:
@@ -51,7 +51,7 @@ class Dms(c.BaseCommand):
             result_str = dms_result.decode('utf-8')
         else:
             result_str = "Done."
-        await self.master.client.send_message(message.rid, result_str)
+        await self.master.client.send_message(message.roomid, result_str)
 
     def _create_dmsclient_config_if_missing(self, token: str) -> None:
         rcfile = os.path.expanduser('~/.dmsrc')

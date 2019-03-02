@@ -69,9 +69,9 @@ class Mensa(c.BaseCommand):
         """
         if command in ['essen', 'food']:
             msg = await _food_command(args)
-            await self.master.client.send_message(message.rid, msg)
+            await self.master.client.send_message(message.roomid, msg)
         if command in ['etm', 'etlm']:
-            poll = self.pollmanager.polls.get(room_id=message.rid)
+            poll = self.pollmanager.polls.get(room_id=message.roomid)
             poll_options = pollutil.parse_args(args)
 
             if poll and poll.title == 'ETM' and poll.created_on.is_today():
@@ -82,8 +82,8 @@ class Mensa(c.BaseCommand):
                 if len(poll_options) == 0:
                     poll_options.append('11:30')
                 msg = await _food_command("")
-                await self.master.client.send_message(message.rid, msg)
-                await self.pollmanager.create(message.rid, message._id, 'ETM', poll_options)
+                await self.master.client.send_message(message.roomid, msg)
+                await self.pollmanager.create(message.roomid, message.id, 'ETM', poll_options)
 
     async def etx_command(self, etx: str, args: str, msg: m.Message) -> None:
         """To be implemented

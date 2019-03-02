@@ -79,7 +79,7 @@ class Message:
         self.message_type = m.create(m.MessageType, kwargs.get('t'), default=m.MessageType.STANDARD_MESSAGE)
         self.role_type = m.create(m.RoleType, kwargs.get('role'), default=m.RoleType.NONE)
 
-        self.attachments = [m.create(Attachments, a) for a in kwargs.get('attachments', list())]
+        self.attachments = [m.create(Attachment, a) for a in kwargs.get('attachments', list())]
         self.channels = [m.create(RoomRef, l) for l in kwargs.get('channels', list())]
         self.mentions = [m.create(UserRef, u) for u in kwargs.get('mentions', list())]
         self.urls = [m.create(Link, l) for l in kwargs.get('urls', list())]

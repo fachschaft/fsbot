@@ -29,11 +29,11 @@ class PrefixCommandMixin(b.BaseBot):
                 await com.handle(command, args, message)
                 return
         if self._show_usage_on_unknown:
-            room = await self.master.room(message.rid)
+            room = await self.master.room(message.roomid)
             roomref = room.to_roomref2(True)
 
             msg = await usage.get_message(self.master, roomref)
-            await self.master.client.send_message(message.rid, msg)
+            await self.master.client.send_message(message.roomid, msg)
 
 
 class CustomHandlerMixin(b.BaseBot):
