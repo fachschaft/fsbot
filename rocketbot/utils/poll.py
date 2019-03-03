@@ -34,7 +34,7 @@ class PollCache:
         self.by_original_msg_id: Dict[str, Poll] = {}
         self.by_poll_msg_id: Dict[str, Poll] = {}
         self.by_status_msg_id: Dict[str, Poll] = {}
-        self.last_active_by_room_id: Dict[str, Poll] = {}
+        self.last_active_by_roomid: Dict[str, Poll] = {}
 
     def new_id(self) -> str:
         """Returns a unique (not used by any active poll) human understandable id
@@ -58,7 +58,7 @@ class PollCache:
             poll_msg_id: Optional[str] = None,
             original_msg_id: Optional[str] = None,
             status_msg_id: Optional[str] = None,
-            room_id: Optional[str] = None) -> Optional['Poll']:
+            roomid: Optional[str] = None) -> Optional['Poll']:
         """Get a poll by a single key property
         """
         if id is not None and id in self.by_id:
@@ -69,8 +69,8 @@ class PollCache:
             return self.by_original_msg_id[original_msg_id]
         if status_msg_id is not None and status_msg_id in self.by_status_msg_id:
             return self.by_status_msg_id[status_msg_id]
-        if room_id is not None and room_id in self.last_active_by_room_id:
-            return self.last_active_by_room_id[room_id]
+        if roomid is not None and roomid in self.last_active_by_roomid:
+            return self.last_active_by_roomid[roomid]
         return None
 
     def add(self, poll: 'Poll') -> None:
@@ -80,7 +80,7 @@ class PollCache:
         self.by_original_msg_id[poll.original_msg_id] = poll
         self.by_poll_msg_id[poll.poll_msg_id] = poll
         self.by_status_msg_id[poll.status_msg_id] = poll
-        self.last_active_by_room_id[poll.room_id] = poll
+        self.last_active_by_roomid[poll.roomid] = poll
 
     def remove(self, *,
                id: Optional[str] = None,
@@ -96,9 +96,9 @@ class PollCache:
         del self.by_original_msg_id[poll.original_msg_id]
         del self.by_poll_msg_id[poll.poll_msg_id]
         del self.by_status_msg_id[poll.status_msg_id]
-        room_poll = self.last_active_by_room_id[poll.room_id]
+        room_poll = self.last_active_by_roomid[poll.roomid]
         if poll.id == room_poll.id:
-            del self.last_active_by_room_id[poll.room_id]
+            del self.last_active_by_roomid[poll.roomid]
         return poll
 
 
@@ -120,7 +120,7 @@ class PollManager:
         self.master.bots.append(statusbot)
 
         # Load history of polls
-        room_ids = set()
+        roomids = set()
         history = self.master.rest_api.channels_history(statusroom._id, count=100).json()
         if 'messages' not in history:
             return
@@ -129,33 +129,33 @@ class PollManager:
                 poll = _deserialize_poll(msg['msg'])
                 poll.status_msg_id = msg['_id']
                 self.polls.add(poll)
-                room_ids.add(poll.room_id)
+                roomids.add(poll.roomid)
             except json.decoder.JSONDecodeError:
                 pass
-        for rid in room_ids:
+        for rid in roomids:
             room = self.master.rest_api.rooms_info(room_id=rid).json()
             if 'name' in room['room']:
                 self.roomBot.rooms.add(room['room']['name'])
 
-    async def create(self, room_id: str, msg_id: str, title: str, options: List[str]) -> None:
+    async def create(self, roomid: str, msg_id: str, title: str, options: List[str]) -> None:
         id = self.polls.new_id()
         poll = Poll(
             botname=self.botname, original_msg_id=msg_id,
-            title=title, vote_options=options, id=id, room_id=room_id)
-        await poll.send_new_poll_message(self.master, room_id, self.statusroom._id)
+            title=title, vote_options=options, id=id, roomid=roomid)
+        await poll.send_new_poll_message(self.master, roomid, self.statusroom._id)
 
-        room = await self.master.room(room_id)
+        room = await self.master.room(roomid)
         if room.name is not None:
             self.roomBot.rooms.add(room.name)
 
         self.polls.add(poll)
 
-    async def push(self, poll: Poll, room_id: str) -> None:
+    async def push(self, poll: Poll, roomid: str) -> None:
         """Resend an active poll
         """
-        await poll.send_new_poll_message(self.master, room_id, self.statusroom._id)
+        await poll.send_new_poll_message(self.master, roomid, self.statusroom._id)
 
-        room = await self.master.room(room_id)
+        room = await self.master.room(roomid)
         if room.name is not None:
             self.roomBot.rooms.add(room.name)
 
@@ -252,10 +252,10 @@ def _deserialize_polloption(data: Dict[str, Any]) -> PollOption:
 
 
 class Poll:
-    def __init__(self, id: str, room_id: str, original_msg_id: str, botname: str, title: str, vote_options: List[str]):
+    def __init__(self, id: str, roomid: str, original_msg_id: str, botname: str, title: str, vote_options: List[str]):
         self._poll_cache: Optional[PollCache] = None
         self._id = id
-        self.room_id = room_id
+        self._roomid = roomid
         self._original_msg_id = original_msg_id
         self.botname = botname
         self.title = title
@@ -323,17 +323,32 @@ class Poll:
             self._poll_cache.by_status_msg_id[value] = self
         self._status_msg_id = value
 
-    async def send_new_poll_message(self, master: Master, room_id: str, statusroom_id: str) -> None:
+    @property
+    def roomid(self) -> str:
+        return self._roomid
+
+    @roomid.setter
+    def roomid(self, value: str) -> None:
+        if self._poll_cache is not None:
+            if (self._roomid in self._poll_cache.last_active_by_roomid
+                    and self._poll_cache.last_active_by_roomid[self._roomid].id == self.id):
+                del self._poll_cache.last_active_by_roomid[self._roomid]
+            self._poll_cache.last_active_by_roomid[value] = self
+        self._roomid = value
+
+    async def send_new_poll_message(self, master: Master, roomid: str, statusroomid: str) -> None:
         """Send a new message including reactions
         """
+        if self.poll_msg_id:
+            await master.client.delete_message(self.poll_msg_id)
         msg = await self.to_message(master)
-        poll_msg = await master.client.send_message(room_id, msg)
+        poll_msg = await master.client.send_message(roomid, msg)
         self.poll_msg_id = poll_msg.id
-        self.room_id = room_id
+        self.roomid = roomid
         await master.client.update_message({'_id': self.poll_msg_id, 'reactions': self._get_reactions()})
 
         if self._status_msg_id is None:
-            status_msg = await master.client.send_message(statusroom_id, _serialize_poll(self))
+            status_msg = await master.client.send_message(statusroomid, _serialize_poll(self))
             self.status_msg_id = status_msg.id
         else:
             await master.client.update_message({'_id': self.status_msg_id, 'msg': _serialize_poll(self)})
@@ -437,7 +452,7 @@ class Poll:
 def _serialize_poll(poll: Poll) -> str:
     return json.dumps({
         'id': poll.id,
-        'room_id': poll.room_id,
+        'room_id': poll.roomid,
         'additional_people': [_serialize_polloption(o) for o in poll.additional_people],
         'botname': poll.botname,
         'options': [_serialize_polloption(o) for o in poll.options],
@@ -452,7 +467,7 @@ def _deserialize_poll(strdata: str) -> Poll:
     data = json.loads(strdata)
     poll = Poll(
         id=data['id'],
-        room_id=data['room_id'],
+        roomid=data['room_id'],
         botname=data['botname'],
         original_msg_id=data['original_msg_id'],
         title=data['title'],

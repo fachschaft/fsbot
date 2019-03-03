@@ -94,7 +94,7 @@ class Etm(c.BaseCommand):
         """Handle the incoming message
         """
         if command in ['etm', 'etlm']:
-            poll = self.pollmanager.polls.get(room_id=message.roomid)
+            poll = self.pollmanager.polls.get(roomid=message.roomid)
             poll_options = pollutil.parse_args(args)
 
             if poll and poll.title == 'ETM' and poll.created_on.is_today():

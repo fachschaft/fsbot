@@ -27,7 +27,7 @@ class Poll(c.BaseCommand):
         if command == 'poll':
             await self.create_poll(args, message)
         if command == 'poll_push':
-            poll = self.pollmanager.polls.last_active_by_room_id[message.roomid]
+            poll = self.pollmanager.polls.last_active_by_roomid[message.roomid]
             if len(message.channels) > 0:
                 await self.pollmanager.push(poll, message.channels[0]._id)
             else:
