@@ -34,13 +34,13 @@ async def go() -> None:
             bots.RoomTypeMentionCommandBot(
                 master=masterbot, username=c.BOTNAME,
                 enable_public_channel=True, enable_private_groups=True,
-                commands=[usage, ping, poll]))
+                commands=[usage, ping]))
         # Direct message bot
         masterbot.bots.append(
             bots.RoomTypeCommandBot(
                 master=masterbot, username=c.BOTNAME,
                 enable_direct_message=True,
-                commands=[usage, ping, dms, food]))
+                commands=[usage, ping, dms, food, poll]))
         # Mensa bot
         masterbot.bots.append(
             bots.RoomCommandBot(

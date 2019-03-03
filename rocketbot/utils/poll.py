@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import collections
 import dataclasses
 import datetime
@@ -128,11 +130,12 @@ class PollManager:
                 poll.status_msg_id = msg['_id']
                 self.polls.add(poll)
                 room_ids.add(poll.room_id)
-            except json.decoder.JSONDecodeError as e:
-                print(e)
+            except json.decoder.JSONDecodeError:
+                pass
         for rid in room_ids:
             room = self.master.rest_api.rooms_info(room_id=rid).json()
-            self.roomBot.rooms.add(room['room']['name'])
+            if 'name' in room['room']:
+                self.roomBot.rooms.add(room['room']['name'])
 
     async def create(self, room_id: str, msg_id: str, title: str, options: List[str]) -> None:
         id = self.polls.new_id()
@@ -147,20 +150,14 @@ class PollManager:
 
         self.polls.add(poll)
 
-    async def push(self, room_id: str, msg_id: str) -> None:
+    async def push(self, poll: Poll, room_id: str) -> None:
         """Resend an active poll
         """
-        if room_id not in self.polls.last_active_by_room_id:
-            await self.master.client.send_message(room_id, 'No active poll found.')
-            return
-
-        poll = self.polls.last_active_by_room_id[room_id]
-        self.polls.remove(id=poll.id)
-
-        poll.original_msg_id = msg_id
         await poll.send_new_poll_message(self.master, room_id, self.statusroom._id)
 
-        self.polls.add(poll)
+        room = await self.master.room(room_id)
+        if room.name is not None:
+            self.roomBot.rooms.add(room.name)
 
     async def _poll_callback(self, message: m.Message) -> None:
         msg_id = message.id
@@ -332,6 +329,7 @@ class Poll:
         msg = await self.to_message(master)
         poll_msg = await master.client.send_message(room_id, msg)
         self.poll_msg_id = poll_msg.id
+        self.room_id = room_id
         await master.client.update_message({'_id': self.poll_msg_id, 'reactions': self._get_reactions()})
 
         if self._status_msg_id is None:

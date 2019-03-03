@@ -13,7 +13,7 @@ class Poll(c.BaseCommand):
     def usage(self) -> List[Tuple[str, str]]:
         return [
             ('poll <poll_title> <option_1> .. <option_26>', 'Create a poll'),
-            ('poll_push', 'Resend the poll message'),
+            ('poll_push #room', 'Push the poll into #room'),
         ]
 
     def can_handle(self, command: str) -> bool:
@@ -27,7 +27,11 @@ class Poll(c.BaseCommand):
         if command == 'poll':
             await self.create_poll(args, message)
         if command == 'poll_push':
-            await self.pollmanager.push(message.roomid, message.id)
+            poll = self.pollmanager.polls.last_active_by_room_id[message.roomid]
+            if len(message.channels) > 0:
+                await self.pollmanager.push(poll, message.channels[0]._id)
+            else:
+                await self.master.client.send_message(message.roomid, "Please specify a room")
 
     async def create_poll(self, args: str, message: m.Message) -> None:
         args_list = pollutil.parse_args(args)
