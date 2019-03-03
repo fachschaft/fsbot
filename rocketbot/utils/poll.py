@@ -112,7 +112,9 @@ class PollManager:
         self.polls = PollCache()
 
         # Pollbot: Responsible for updates made by commands/reactions
-        self.roomBot = bots.RoomCustomBot(master=master, whitelist=[], callback=self._poll_callback)
+        self.roomBot = bots.RoomCustomBot(
+            master=master, whitelist=[],
+            whitelist_directmsgs=True, callback=self._poll_callback)
         self.master.bots.append(self.roomBot)
 
         # Statusbot: Responsible for updates made in the status room

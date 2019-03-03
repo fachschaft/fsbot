@@ -8,9 +8,16 @@ class WhitelistRoomMixin(b.BaseBot):
     def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
         self.rooms = set(self._init_value(kwargs, 'whitelist'))
+        self.whitelist_directmsgs = self._init_value(kwargs, 'whitelist_directmsgs', False)
 
     def is_applicable(self, room: m.RoomRef2) -> bool:
-        if room.roomName and room.roomName in self.rooms:
+        # Direct messages do not have a room name
+        if room.roomType == m.RoomType.DIRECT:
+            if self.whitelist_directmsgs:
+                return super().is_applicable(room)
+            return False
+
+        if room.roomName in self.rooms:
             return super().is_applicable(room)
         return False
 

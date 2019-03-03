@@ -24,9 +24,20 @@ def test_whitelistbot() -> None:
     bot = WhiteListBot(master=None, whitelist=['room1'])
     r1 = m.RoomRef2(roomType=m.RoomType.PUBLIC, roomParticipant=True, roomName='room1')
     r2 = m.RoomRef2(roomType=m.RoomType.PUBLIC, roomParticipant=True, roomName='room2')
+    r3 = m.RoomRef2(roomType=m.RoomType.DIRECT, roomParticipant=True)
 
     assert bot.is_applicable(r1) is True
     assert bot.is_applicable(r2) is False
+    assert bot.is_applicable(r3) is False
+
+
+def test_whitelistbot_directmsgs() -> None:
+    bot = WhiteListBot(master=None, whitelist=[], whitelist_directmsgs=True)
+    r1 = m.RoomRef2(roomType=m.RoomType.PUBLIC, roomParticipant=True, roomName='room1')
+    r2 = m.RoomRef2(roomType=m.RoomType.DIRECT, roomParticipant=True)
+
+    assert bot.is_applicable(r1) is False
+    assert bot.is_applicable(r2) is True
 
 
 class BlacklistBot(ac.BlacklistRoomMixin, BaseBot):
