@@ -339,13 +339,23 @@ class Poll:
     async def send_new_poll_message(self, master: Master, roomid: str, statusroomid: str) -> None:
         """Send a new message including reactions
         """
-        if self.poll_msg_id:
+        if self._poll_msg_id:
             await master.client.delete_message(self.poll_msg_id)
         msg = await self.to_message(master)
+
+        # Save reactions and clear users in order to avoid a back and forth
+        # because the initial message is without reactions and would trigger
+        # an update because reactions are missing
+        reactions = self._get_reactions()
+        for o in self.options:
+            o.users.clear()
+        for o in self.additional_people:
+            o.users.clear()
+
         poll_msg = await master.client.send_message(roomid, msg)
         self.poll_msg_id = poll_msg.id
         self.roomid = roomid
-        await master.client.update_message({'_id': self.poll_msg_id, 'reactions': self._get_reactions()})
+        await master.client.update_message({'_id': self.poll_msg_id, 'reactions': reactions})
 
         if self._status_msg_id is None:
             status_msg = await master.client.send_message(statusroomid, _serialize_poll(self))
