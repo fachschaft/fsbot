@@ -35,3 +35,6 @@ sort_import:
 
 verify_import:
 	isort --check-only -rc $(FILES)
+
+restart_testserver:
+	sudo venv/bin/docker-compose -f docker-compose-testserver.yml down && sudo venv/bin/docker-compose -f docker-compose-testserver.yml up -d
