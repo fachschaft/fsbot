@@ -146,7 +146,7 @@ class PollManager:
             title=title, vote_options=options, id=id, roomid=roomid)
         await poll.send_new_poll_message(self.master, roomid, self.statusroom._id)
 
-        room = await self.master.room(roomid)
+        room = await self.master.room(room_id=roomid)
         if room.name is not None:
             self.roomBot.rooms.add(room.name)
 
@@ -157,7 +157,7 @@ class PollManager:
         """
         await poll.send_new_poll_message(self.master, roomid, self.statusroom._id)
 
-        room = await self.master.room(roomid)
+        room = await self.master.room(room_id=roomid)
         if room.name is not None:
             self.roomBot.rooms.add(room.name)
 
@@ -167,7 +167,7 @@ class PollManager:
             if not message.msg:
                 poll = self.polls.remove(original_msg_id=msg_id)
 
-                room = await self.master.room(message.roomid)
+                room = await self.master.room(room_id=message.roomid)
                 if room.name:
                     self.roomBot.rooms.discard(room.name)
 

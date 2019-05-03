@@ -17,7 +17,7 @@ class Usage(c.BaseCommand):
     async def handle(self, command: str, args: str, message: m.Message) -> None:
         """Handle the incoming message
         """
-        room = await self.master.room(message.roomid)
+        room = await self.master.room(room_id=message.roomid)
         roomref = room.to_roomref2(True)
 
         msg = await usage.get_message(self.master, roomref)

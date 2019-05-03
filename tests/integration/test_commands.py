@@ -1,5 +1,6 @@
-from typing import AsyncIterator
 import asyncio
+from typing import AsyncIterator
+
 import pytest
 
 import rocketbot.bots as bots
@@ -49,7 +50,10 @@ async def test_poll_push_to_public(
 @pytest.mark.asyncio
 async def test_poll_push_to_private(
         event_loop: asyncio.AbstractEventLoop, pollbot: master.Master,
-        user: master.Master, private_group: m.Room) -> None:
+        user: master.Master, private_group: m.Room, admin: master.Master) -> None:
+
+    admin.rest_api.groups_invite(private_group._id, pollbot.rest_api.headers['X-User-Id'])
+    admin.rest_api.groups_invite(private_group._id, user.rest_api.headers['X-User-Id'])
     # Register a bot waiting for the poll which resolves a future
     future = event_loop.create_future()
     user.bots.append(bots.RoomCustomBot(

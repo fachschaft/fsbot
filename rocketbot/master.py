@@ -1,6 +1,6 @@
 import asyncio
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from rocketchat_API.APIExceptions.RocketExceptions import (
     RocketConnectionException
@@ -31,7 +31,8 @@ class Master:
         self.rest_api = RocketChat(user=username, password=password, server_url=rest_url)
         self._username = username
         self._password = password
-        self._rooms_cache: Dict[str, m.Room] = {}
+        self._roomid_cache: Dict[str, m.Room] = {}
+        self._roomname_cache: Dict[str, m.Room] = {}
         self._users_cache: Dict[str, m.UserRef] = {}
         self.bots: List[b.BaseBot] = []
 
@@ -47,18 +48,37 @@ class Master:
         await self.client.logout()
         await self.client.disconnect()
 
-    async def room(self, room_id: str) -> m.Room:
-        if room_id not in self._rooms_cache:
-            try:
-                result = self.rest_api.rooms_info(room_id=room_id).json()
-                if 'room' in result:
-                    self._rooms_cache[room_id] = m.create(m.Room, result['room'])
-                else:
-                    result['roomId'] = room_id
-                    raise exp.RocketBotException(result)
-            except RocketConnectionException as e:
-                raise exp.RocketClientException(e)
-        return self._rooms_cache[room_id]
+    async def room(self, *, room_id: Optional[str] = None, room_name: Optional[str] = None) -> m.Room:
+        if room_id is not None:
+            if room_id not in self._roomid_cache:
+                try:
+                    result = self.rest_api.rooms_info(room_id=room_id).json()
+                    if 'room' in result:
+                        room = m.create(m.Room, result['room'])
+                        self._roomid_cache[room_id] = room
+                        if room.name is not None:
+                            self._roomname_cache[room.name] = room
+                    else:
+                        result['roomId'] = room_id
+                        raise exp.RocketBotException(result)
+                except RocketConnectionException as e:
+                    raise exp.RocketClientException(e)
+            return self._roomid_cache[room_id]
+        if room_name is not None:
+            if room_name not in self._roomname_cache:
+                try:
+                    result = self.rest_api.rooms_info(room_name=room_name).json()
+                    if 'room' in result:
+                        room = m.create(m.Room, result['room'])
+                        self._roomid_cache[room._id] = room
+                        self._roomname_cache[room_name] = room
+                    else:
+                        result['roomName'] = room_name
+                        raise exp.RocketBotException(result)
+                except RocketConnectionException as e:
+                    raise exp.RocketClientException(e)
+            return self._roomname_cache[room_name]
+        raise exp.RocketBotException("You have to specify either room_id or room_name.")
 
     async def user(self, username: str) -> m.UserRef:
         if username not in self._users_cache:

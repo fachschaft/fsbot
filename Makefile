@@ -2,6 +2,9 @@ FILES=*.py rocketbot tests
 
 all: mypy lint sort_import
 
+run:
+	python main.py
+
 push: update utest mypy lint verify_import itest
 	git push
 

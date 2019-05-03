@@ -1,3 +1,4 @@
+import re
 from typing import Any, List, Tuple
 
 import rocketbot.commands as c
@@ -27,18 +28,30 @@ class Poll(c.BaseCommand):
         if command == 'poll':
             await self.create_poll(args, message)
         if command == 'poll_push':
+            match = re.match(r'\s*#(\S+)', args)
+            if not match:
+                await self.master.client.send_message(message.roomid, "Please specify a room")
+                return
+
+            room_name = match.groups()[0]
+
             if message.roomid not in self.pollmanager.polls.last_active_by_roomid:
                 await self.master.client.send_message(message.roomid, "Please create a poll first")
                 return
+
             poll = self.pollmanager.polls.last_active_by_roomid[message.roomid]
-            if len(message.channels) > 0:
-                await self.pollmanager.push(poll, message.channels[0]._id)
-            else:
-                await self.master.client.send_message(message.roomid, "Please specify a room")
+            # Only public rooms are listed in 'channels'
+            roomref = [r for r in message.channels if r.name == room_name]
+            if len(roomref) != 0:
+                await self.pollmanager.push(poll, roomref[0]._id)
+                return
+            # For private rooms, the id has to be retrieved
+            room = await self.master.room(room_name=room_name)
+            await self.pollmanager.push(poll, room._id)
 
     async def create_poll(self, args: str, message: m.Message) -> None:
         args_list = pollutil.parse_args(args)
         if len(args_list) > 1:
             await self.pollmanager.create(message.roomid, message.id, args_list[0], args_list[1:])
         else:
-            await self.master.client.send_message(message.roomid, f'*Usage:*\n```{self.usage()}```')
+            await self.master.client.send_message(message.roomid, f'*Usage:*\n```{self.usage()[0][0]}```')
