@@ -27,6 +27,9 @@ class Poll(c.BaseCommand):
         if command == 'poll':
             await self.create_poll(args, message)
         if command == 'poll_push':
+            if message.roomid not in self.pollmanager.polls.last_active_by_roomid:
+                await self.master.client.send_message(message.roomid, "Please create a poll first")
+                return
             poll = self.pollmanager.polls.last_active_by_roomid[message.roomid]
             if len(message.channels) > 0:
                 await self.pollmanager.push(poll, message.channels[0]._id)

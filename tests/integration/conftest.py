@@ -84,8 +84,17 @@ def user(user_user: m.User, event_loop: asyncio.AbstractEventLoop) -> master.Mas
 
 @pytest.fixture
 def public_channel(admin: master.Master) -> m.Room:
-    json = admin.rest_api.channels_create(random_string(10)).json()
-    return m.create(m.Room, json['channel'])
+    return _get_or_create_public_room(admin, random_string(10))
+
+
+@pytest.fixture
+def statusroom(admin: master.Master) -> m.Room:
+    return _get_or_create_public_room(admin, 'pollstatusroom')
+
+
+@pytest.fixture
+def private_group(admin: master.Master) -> m.Room:
+    return _get_or_create_private_group(admin, random_string(10))
 
 
 def _get_or_create_user(
@@ -106,3 +115,19 @@ def _get_or_create_user(
         ).json()
 
     return m.create(m.User, result['user'])
+
+
+def _get_or_create_public_room(master: master.Master, roomname: str) -> m.Room:
+    result = master.rest_api.channels_info(channel=roomname).json()
+    if not result['success']:
+        result = master.rest_api.channels_create(name=roomname).json()
+
+    return m.create(m.Room, result['channel'])
+
+
+def _get_or_create_private_group(master: master.Master, roomname: str) -> m.Room:
+    result = master.rest_api.groups_info(room_name=roomname).json()
+    if not result['success']:
+        result = master.rest_api.groups_create(name=roomname).json()
+
+    return m.create(m.Room, result['group'])
