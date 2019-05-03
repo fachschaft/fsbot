@@ -1,3 +1,4 @@
+import datetime
 from typing import Any
 
 import pytest
@@ -6,6 +7,18 @@ import rocketbot.bots.accesscontrol as ac
 import rocketbot.bots.base as base
 import rocketbot.bots.messagefilter as mf
 import rocketbot.models as m
+
+
+@pytest.fixture
+def message() -> m.Message:
+    return m.Message({
+        '_id': 'id',
+        '_updatedAt': datetime.datetime.now().isoformat(),
+        'rid': 'rid',
+        'msg': '',
+        'ts': datetime.datetime.now().isoformat(),
+        'u': {'_id': '_id', 'username': 'username', 'name': 'name'}
+    })
 
 
 class BaseBot(base.BaseBot):

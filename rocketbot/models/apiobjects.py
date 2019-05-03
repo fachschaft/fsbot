@@ -196,6 +196,33 @@ class RoomRef2:
 
 
 @dataclasses.dataclass
+class User:
+    _id: str
+    username: str
+    name: str
+    active: bool
+    status: str
+    type: str
+
+    createdAt: Optional[m.RcDatetime] = None
+    _updatedAt: Optional[m.RcDatetime] = None
+    lastLogin: Optional[m.RcDatetime] = None
+    emails: Optional[List[Dict[str, Any]]] = None
+    roles: Optional[List[m.RoleType]] = None
+    services: Optional[Dict[str, Any]] = None
+    settings: Optional[Dict[str, Any]] = None
+    statusConnection: Optional[str] = None
+    utcOffset: Optional[int] = None
+
+    def __post_init__(self) -> None:
+        self.createdAt = m.try_create(m.RcDatetime, self.createdAt)
+        self._updatedAt = m.try_create(m.RcDatetime, self._updatedAt)
+        self.lastLogin = m.try_create(m.RcDatetime, self.lastLogin)
+        if self.roles is not None:
+            self.roles = [m.create(m.RoleType, r) for r in self.roles]
+
+
+@dataclasses.dataclass
 class UserRef:
     _id: str
     username: str  # Unique name (@...)

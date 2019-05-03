@@ -7,7 +7,8 @@ import ejson
 
 import rocketbot.exception as exp
 from rocketbot.models.apiobjects import (
-    ApiObject, Attachment, File, Message, Room, RoomRef, RoomRef2, UserRef
+    ApiObject, Attachment, File, Message, Room, RoomRef, RoomRef2, User,
+    UserRef
 )
 from rocketbot.models.clientresults import (
     GetRoomsResult, LoadHistoryResult, LoginResult, SubscriptionResult

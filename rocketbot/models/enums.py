@@ -28,6 +28,9 @@ class MessageType(Enum):
 class RoleType(Enum):
     NONE = 'none'
     OWNER = 'owner'
+    USER = 'user'
+    ADMIN = 'admin'
+    BOT = 'bot'
 
 
 class RoomType(Enum):

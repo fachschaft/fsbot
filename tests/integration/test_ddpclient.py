@@ -1,16 +1,15 @@
 import asyncio
-from typing import AsyncIterable, Dict
+from typing import AsyncIterable
 
 import pytest
-from rocketchat_API.rocketchat import RocketChat
 
 import rocketbot.client as c
 import rocketbot.models as m
 
-from ..utils import random_string
-
 
 def setup_module() -> None:
+    # Enable strict mode for ddpclient test to find new fields
+    # Strict mode checks if all incoming fields are used by the object model
     m.STRICT_MODE = True
 
 
@@ -29,31 +28,10 @@ async def anonym_client(event_loop: asyncio.AbstractEventLoop) -> AsyncIterable[
 
 
 @pytest.yield_fixture
-async def client(anonym_client: c.Client, exisiting_user: Dict[str, str]) -> AsyncIterable[c.Client]:
-    await anonym_client.login(exisiting_user['username'], exisiting_user['password'])
+async def client(anonym_client: c.Client, user_user: m.User) -> AsyncIterable[c.Client]:
+    await anonym_client.login(user_user.username, user_user.username)
 
     yield anonym_client
-
-
-@pytest.fixture
-def exisiting_user() -> Dict[str, str]:
-    rocket = RocketChat()
-    username = random_string(10)
-    user = {
-        'username': username,
-        'name': random_string(10),
-        'password': random_string(10),
-        'email': f'{username}@example.com',
-    }
-    rocket.users_register(**user).json()
-    return user
-
-
-@pytest.fixture
-def exisiting_channel() -> str:
-    rocket = RocketChat()
-    room = rocket.channels_create(random_string(10)).json()['channel']
-    return room['_id']
 
 
 @pytest.mark.asyncio
@@ -67,12 +45,12 @@ async def test_basic_connect_disconnect(event_loop: asyncio.AbstractEventLoop) -
 
 
 @pytest.mark.asyncio
-async def test_login(anonym_client: c.Client, exisiting_user: Dict[str, str]) -> None:
-    loginresult = await anonym_client.login(exisiting_user['username'], exisiting_user['password'])
+async def test_login(anonym_client: c.Client, user_user: m.User) -> None:
+    loginresult = await anonym_client.login(user_user.username, user_user.username)
     assert loginresult is not None
 
 
 @pytest.mark.asyncio
-async def test_send_message(client: c.Client, exisiting_channel: str) -> None:
-    msg = await client.send_message(exisiting_channel, 'testmessage')
+async def test_send_message(client: c.Client, public_channel: m.Room) -> None:
+    msg = await client.send_message(public_channel._id, 'testmessage')
     assert msg is not None
