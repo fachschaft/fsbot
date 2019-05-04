@@ -1,8 +1,10 @@
 import asyncio
+import re
 import traceback
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 
 from ddp_asyncio import DDPClient
+from ddp_asyncio.exceptions import RemoteMethodError
 from ddp_asyncio.subscription import Subscription
 
 import rocketbot.exception as exp
@@ -39,6 +41,18 @@ class Client:
         self.subscriptions: Dict[str, Subscription] = {}
         self.loop = loop
 
+    async def _call(self, method: str, *params: Any) -> Dict[str, Any]:
+        while True:
+            try:
+                return await self.client.call(method, *params)
+            except RemoteMethodError as e:
+                match = re.match(r'.*?([0-9]+) seconds.*\[too-many-requests\]', e.args[0])
+                if match:
+                    print(f"Sleep for {int(match.groups()[0])}")
+                    await asyncio.sleep(int(match.groups()[0]))
+                else:
+                    raise
+
     async def connect(self) -> None:
         """Connect
         """
@@ -58,12 +72,12 @@ class Client:
 
     async def login(self, username: str, password: str) -> m.LoginResult:
         """Login with the given credentials"""
-        response = await self.client.call("login", {"user": {"username": username}, "password": password})
+        response = await self._call("login", {"user": {"username": username}, "password": password})
         return m.create(m.LoginResult, response)
 
     async def logout(self) -> None:
         """Logout"""
-        await self.client.call("logout")
+        await self._call("logout")
 
     # async def getUserRoles(self):
     #     """This method call is used to get server-wide special users and their
@@ -82,7 +96,7 @@ class Client:
     #             ...
     #         ]
     #     """
-    #     return await self.client.call("getUserRoles")
+    #     return await self._call("getUserRoles")
 
     # async def listEmojiCustom(self):
     #     """Returns a list of custom emoji registered with the server.
@@ -105,7 +119,7 @@ class Client:
     #             ...
     #         ]
     #     """
-    #     return await self.client.call("listEmojiCustom")
+    #     return await self._call("listEmojiCustom")
 
     async def load_history(
             self, room_id: str, num_msgs: int = 50,
@@ -123,7 +137,7 @@ class Client:
 
         from_: load messages starting from this date. Useful for pagination. May be None
         """
-        response = await self.client.call(
+        response = await self._call(
             "loadHistory", room_id, from_, num_msgs, until)
         if isinstance(response, dict):
             return m.LoadHistoryResult(**response)
@@ -133,12 +147,12 @@ class Client:
     #     """This method call is used to get room-wide special users and their
     #     roles. You may send a collection of room ids (at least one).
     #     """
-    #     return await self.client.call("getRoomRoles", room_ids)
+    #     return await self._call("getRoomRoles", room_ids)
 
     async def get_all_rooms(self) -> List[m.Room]:
         """Get all the rooms a user belongs to.
         """
-        response = await self.client.call("rooms/get")
+        response = await self._call("rooms/get")
         return [m.create(m.Room, r) for r in response]
 
     async def get_rooms_since(self, date: m.RcDatetime) -> m.GetRoomsResult:
@@ -146,31 +160,31 @@ class Client:
         to. It accepts a timestamp with the latest client update time in order
         to just send what changed since last call.
         """
-        response = await self.client.call("rooms/get", date)
+        response = await self._call("rooms/get", date)
         return m.GetRoomsResult(**response)
 
     async def create_direct_message(self, username: str) -> str:
         """Get the room id for a direct message with a user
         """
-        response = await self.client.call("createDirectMessage", username)
+        response = await self._call("createDirectMessage", username)
         return response['rid']
 
     async def send_message(self, roomId: str, message: str) -> m.Message:
         """Send a message to a room
         """
-        response = await self.client.call("sendMessage", {"rid": roomId, "msg": message})
+        response = await self._call("sendMessage", {"rid": roomId, "msg": message})
         return m.create(m.Message, response)
 
     async def update_message(self, message: Union[m.Message, Dict[str, Any]]) -> None:
         """Update a message either by a message object or for partial updates only a
         dict with the relevant fields (_id is required)
         """
-        return await self.client.call("updateMessage", message)
+        return await self._call("updateMessage", message)
 
     async def delete_message(self, messageId: str) -> None:
         """Delete a message
         """
-        await self.client.call("deleteMessage", {"_id": messageId})
+        await self._call("deleteMessage", {"_id": messageId})
 
     async def set_reaction(self, emojiId: str, messageId: str, flag: Optional[bool] = None) -> None:
         """React to a message
@@ -180,7 +194,7 @@ class Client:
             False = unset reaction
             None = toggle reaction
         """
-        await self.client.call("setReaction", emojiId, messageId, flag)
+        await self._call("setReaction", emojiId, messageId, flag)
 
     async def subscribe_room(
             self, roomId: str,
