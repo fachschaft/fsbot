@@ -64,11 +64,11 @@ class Food(c.BaseCommand):
             msg = await _food_command(args)
             if msg is None:
                 com, desc = self.usage()[0]
-                await self.master.client.send_message(
+                await self.master.ddp.send_message(
                     message.roomid,
                     f'*Usage:*\n```{com}\n    {desc}```')
             else:
-                await self.master.client.send_message(message.roomid, msg)
+                await self.master.ddp.send_message(message.roomid, msg)
 
 
 class Etm(c.BaseCommand):
@@ -106,5 +106,5 @@ class Etm(c.BaseCommand):
                     poll_options.append('11:30')
                 msg = await _food_command("")
                 if msg is not None:
-                    await self.master.client.send_message(message.roomid, msg)
+                    await self.master.ddp.send_message(message.roomid, msg)
                 await self.pollmanager.create(message.roomid, message.id, 'ETM', poll_options)

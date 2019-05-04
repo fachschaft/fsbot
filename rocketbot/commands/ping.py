@@ -19,6 +19,6 @@ class Ping(c.BaseCommand):
         """Handle the incoming message
         """
         if command == 'ping':
-            await self.master.client.send_message(message.roomid, 'Pong')
+            await self.master.ddp.send_message(message.roomid, 'Pong')
         if command == 'pong':
-            await self.master.client.send_message(message.roomid, 'Ping')
+            await self.master.ddp.send_message(message.roomid, 'Ping')

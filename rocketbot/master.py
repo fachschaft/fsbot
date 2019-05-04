@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional
 from rocketchat_API.APIExceptions.RocketExceptions import (
     RocketConnectionException
 )
-from rocketchat_API.rocketchat import RocketChat
 
 import rocketbot.bots.base as b
 import rocketbot.client as client
@@ -27,8 +26,8 @@ class Master:
             ws_url = f'ws://{base_url}/websocket'
             rest_url = f'http://{base_url}'
 
-        self.client = client.Client(ws_url, loop)
-        self.rest_api = RocketChat(user=username, password=password, server_url=rest_url)
+        self.ddp = client.DdpClient(ws_url, loop)
+        self.rest = client.RestClient(user=username, password=password, server_url=rest_url)
         self._username = username
         self._password = password
         self._roomid_cache: Dict[str, m.Room] = {}
@@ -37,22 +36,22 @@ class Master:
         self.bots: List[b.BaseBot] = []
 
     async def __aenter__(self) -> 'Master':
-        await self.client.connect()
-        await self.client.login(self._username, self._password)
+        await self.ddp.connect()
+        await self.ddp.login(self._username, self._password)
 
         await self.enable_bots()
 
         return self
 
     async def __aexit__(self, exception_type: Any, exception_value: Any, traceback: Any) -> None:
-        await self.client.logout()
-        await self.client.disconnect()
+        await self.ddp.logout()
+        await self.ddp.disconnect()
 
     async def room(self, *, room_id: Optional[str] = None, room_name: Optional[str] = None) -> m.Room:
         if room_id is not None:
             if room_id not in self._roomid_cache:
                 try:
-                    result = self.rest_api.rooms_info(room_id=room_id).json()
+                    result = self.rest.rooms_info(room_id=room_id).json()
                     if 'room' in result:
                         room = m.create(m.Room, result['room'])
                         self._roomid_cache[room_id] = room
@@ -67,7 +66,7 @@ class Master:
         if room_name is not None:
             if room_name not in self._roomname_cache:
                 try:
-                    result = self.rest_api.rooms_info(room_name=room_name).json()
+                    result = self.rest.rooms_info(room_name=room_name).json()
                     if 'room' in result:
                         room = m.create(m.Room, result['room'])
                         self._roomid_cache[room._id] = room
@@ -83,7 +82,7 @@ class Master:
     async def user(self, username: str) -> m.UserRef:
         if username not in self._users_cache:
             try:
-                user = self.rest_api.users_info(username=username).json()['user']
+                user = self.rest.users_info(username=username).json()['user']
                 self._users_cache[username] = m.UserRef(_id=user['_id'], username=username, name=user['name'])
             except Exception:
                 # Retry next time
@@ -101,4 +100,4 @@ class Master:
                 if bot.is_applicable(result.room):
                     await bot.handle(result.message)
 
-        await self.client.subscribe_my_messages(_callback)
+        await self.ddp.subscribe_my_messages(_callback)

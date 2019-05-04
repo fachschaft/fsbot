@@ -1,11 +1,16 @@
 import asyncio
 import re
+import time
 import traceback
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 
+import requests
 from ddp_asyncio import DDPClient
 from ddp_asyncio.exceptions import RemoteMethodError
 from ddp_asyncio.subscription import Subscription
+from rocketchat_API.rocketchat import (
+    RocketAuthenticationException, RocketChat, RocketConnectionException
+)
 
 import rocketbot.exception as exp
 import rocketbot.models as m
@@ -30,8 +35,8 @@ async def _subscription_cb_wrapper(
             traceback.print_exc()
 
 
-class Client:
-    """RocketChat Client
+class DdpClient:
+    """RocketChat DdpClient
 
     Implements all available rocketchat methods and subscriptions
     """
@@ -48,7 +53,6 @@ class Client:
             except RemoteMethodError as e:
                 match = re.match(r'.*?([0-9]+) seconds.*\[too-many-requests\]', e.args[0])
                 if match:
-                    print(f"Sleep for {int(match.groups()[0])}")
                     await asyncio.sleep(int(match.groups()[0]))
                 else:
                     raise
@@ -179,7 +183,7 @@ class Client:
         """Update a message either by a message object or for partial updates only a
         dict with the relevant fields (_id is required)
         """
-        return await self._call("updateMessage", message)
+        await self._call("updateMessage", message)
 
     async def delete_message(self, messageId: str) -> None:
         """Delete a message
@@ -219,3 +223,35 @@ class Client:
         - all joined private groups
         - all direct messages"""
         return await self.subscribe_room('__my_messages__', callback)
+
+
+class RestClient(RocketChat):  # type: ignore
+    """RocketChat RestClient
+
+    Extends the rocketchat_api capabilities
+    """
+
+    def login(self, user: str, password: str) -> requests.Response:
+        while True:
+            login_request = requests.post(
+                self.server_url + self.API_path + 'login',
+                data={'username': user, 'password': password},
+                verify=self.ssl_verify,
+                proxies=self.proxies)
+            if login_request.status_code == 401:
+                raise RocketAuthenticationException()
+            if login_request.status_code == 429:
+                reset = int(login_request.headers['X-RateLimit-Reset']) / 1000
+                delay = reset - time.time()
+                time.sleep(delay)
+                continue
+
+            if login_request.status_code == 200:
+                if login_request.json().get('status') == "success":
+                    self.headers['X-Auth-Token'] = login_request.json().get('data').get('authToken')
+                    self.headers['X-User-Id'] = login_request.json().get('data').get('userId')
+                    return login_request
+                else:
+                    raise RocketAuthenticationException()
+            else:
+                raise RocketConnectionException(login_request.status_code)

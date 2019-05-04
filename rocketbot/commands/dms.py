@@ -51,7 +51,7 @@ class Dms(c.BaseCommand):
             result_str = dms_result.decode('utf-8')
         else:
             result_str = "Done."
-        await self.master.client.send_message(message.roomid, result_str)
+        await self.master.ddp.send_message(message.roomid, result_str)
 
     def _create_dmsclient_config_if_missing(self, token: str) -> None:
         rcfile = os.path.expanduser('~/.dmsrc')

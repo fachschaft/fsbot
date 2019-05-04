@@ -21,4 +21,4 @@ class Usage(c.BaseCommand):
         roomref = room.to_roomref2(True)
 
         msg = await usage.get_message(self.master, roomref)
-        await self.master.client.send_message(message.roomid, msg)
+        await self.master.ddp.send_message(message.roomid, msg)

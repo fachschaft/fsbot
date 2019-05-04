@@ -123,7 +123,7 @@ class PollManager:
 
         # Load history of polls
         roomids = set()
-        history = self.master.rest_api.channels_history(statusroom._id, count=100).json()
+        history = self.master.rest.channels_history(statusroom._id, count=100).json()
         if 'messages' not in history:
             return
         for msg in history['messages'][::-1]:
@@ -135,7 +135,7 @@ class PollManager:
             except json.decoder.JSONDecodeError:
                 pass
         for rid in roomids:
-            room = self.master.rest_api.rooms_info(room_id=rid).json()
+            room = self.master.rest.rooms_info(room_id=rid).json()
             if 'name' in room['room']:
                 self.roomBot.rooms.add(room['room']['name'])
 
@@ -172,8 +172,8 @@ class PollManager:
                     self.roomBot.rooms.discard(room.name)
 
                 if poll.poll_msg_id:
-                    await self.master.client.delete_message(poll.poll_msg_id)
-                    await self.master.client.delete_message(poll.status_msg_id)
+                    await self.master.ddp.delete_message(poll.poll_msg_id)
+                    await self.master.ddp.delete_message(poll.status_msg_id)
         if msg_id in self.polls.by_poll_msg_id:
             poll = self.polls.by_poll_msg_id[msg_id]
             if poll.update_reactions(message.reactions):
@@ -200,12 +200,12 @@ class PollManager:
             except json.decoder.JSONDecodeError:
                 poll = self.polls.get(status_msg_id=message.id)
                 if poll:
-                    await self.master.client.update_message({'_id': poll.status_msg_id, 'msg': _serialize_poll(poll)})
+                    await self.master.ddp.update_message({'_id': poll.status_msg_id, 'msg': _serialize_poll(poll)})
 
         else:
             # We don't know what was changed so readd the poll to the cache and resend it
             poll = self.polls.remove(status_msg_id=message.id)
-            await self.master.client.delete_message(poll.poll_msg_id)
+            await self.master.ddp.delete_message(poll.poll_msg_id)
 
 
 def parse_args(args: str) -> List[str]:
@@ -342,7 +342,7 @@ class Poll:
         """Send a new message including reactions
         """
         if self._poll_msg_id:
-            await master.client.delete_message(self.poll_msg_id)
+            await master.ddp.delete_message(self.poll_msg_id)
         msg = await self.to_message(master)
 
         # Save reactions and clear users in order to avoid a back and forth
@@ -354,16 +354,16 @@ class Poll:
         for o in self.additional_people:
             o.users.clear()
 
-        poll_msg = await master.client.send_message(roomid, msg)
+        poll_msg = await master.ddp.send_message(roomid, msg)
         self.poll_msg_id = poll_msg.id
         self.roomid = roomid
-        await master.client.update_message({'_id': self.poll_msg_id, 'reactions': reactions})
+        await master.ddp.update_message({'_id': self.poll_msg_id, 'reactions': reactions})
 
         if self._status_msg_id is None:
-            status_msg = await master.client.send_message(statusroomid, _serialize_poll(self))
+            status_msg = await master.ddp.send_message(statusroomid, _serialize_poll(self))
             self.status_msg_id = status_msg.id
         else:
-            await master.client.update_message({'_id': self.status_msg_id, 'msg': _serialize_poll(self)})
+            await master.ddp.update_message({'_id': self.status_msg_id, 'msg': _serialize_poll(self)})
 
     async def resend_old_message(self, master: Master) -> None:
         """Resend the old message including reactions
@@ -374,8 +374,8 @@ class Poll:
             raise exp.RocketBotPollException('Missing status message')
 
         msg = await self.to_message(master)
-        await master.client.update_message({'_id': self.poll_msg_id, 'msg': msg, 'reactions': self._get_reactions()})
-        await master.client.update_message({'_id': self.status_msg_id, 'msg': _serialize_poll(self)})
+        await master.ddp.update_message({'_id': self.poll_msg_id, 'msg': msg, 'reactions': self._get_reactions()})
+        await master.ddp.update_message({'_id': self.status_msg_id, 'msg': _serialize_poll(self)})
 
     def _get_reactions(self) -> Dict[str, Dict[str, Any]]:
         """Get reactions by the current state

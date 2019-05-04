@@ -104,9 +104,9 @@ def _get_or_create_user(
         *,
         roles: List[str] = ['user']) -> m.User:
 
-    result = master.rest_api.users_info(username=username).json()
+    result = master.rest.users_info(username=username).json()
     if not result['success']:
-        result = master.rest_api.users_create(
+        result = master.rest.users_create(
             username=username,
             name=displayname,
             email=f'{username}@example.com',
@@ -118,16 +118,16 @@ def _get_or_create_user(
 
 
 def _get_or_create_public_room(master: master.Master, roomname: str) -> m.Room:
-    result = master.rest_api.channels_info(channel=roomname).json()
+    result = master.rest.channels_info(channel=roomname).json()
     if not result['success']:
-        result = master.rest_api.channels_create(name=roomname).json()
+        result = master.rest.channels_create(name=roomname).json()
 
     return m.create(m.Room, result['channel'])
 
 
 def _get_or_create_private_group(master: master.Master, roomname: str) -> m.Room:
-    result = master.rest_api.groups_info(room_name=roomname).json()
+    result = master.rest.groups_info(room_name=roomname).json()
     if not result['success']:
-        result = master.rest_api.groups_create(name=roomname).json()
+        result = master.rest.groups_create(name=roomname).json()
 
     return m.create(m.Room, result['group'])

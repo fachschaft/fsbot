@@ -30,13 +30,13 @@ class Poll(c.BaseCommand):
         if command == 'poll_push':
             match = re.match(r'\s*#(\S+)', args)
             if not match:
-                await self.master.client.send_message(message.roomid, "Please specify a room")
+                await self.master.ddp.send_message(message.roomid, "Please specify a room")
                 return
 
             room_name = match.groups()[0]
 
             if message.roomid not in self.pollmanager.polls.last_active_by_roomid:
-                await self.master.client.send_message(message.roomid, "Please create a poll first")
+                await self.master.ddp.send_message(message.roomid, "Please create a poll first")
                 return
 
             poll = self.pollmanager.polls.last_active_by_roomid[message.roomid]
@@ -54,4 +54,4 @@ class Poll(c.BaseCommand):
         if len(args_list) > 1:
             await self.pollmanager.create(message.roomid, message.id, args_list[0], args_list[1:])
         else:
-            await self.master.client.send_message(message.roomid, f'*Usage:*\n```{self.usage()[0][0]}```')
+            await self.master.ddp.send_message(message.roomid, f'*Usage:*\n```{self.usage()[0][0]}```')

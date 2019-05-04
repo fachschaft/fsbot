@@ -18,7 +18,7 @@ async def go() -> None:
     while True:
         masterbot = master.Master(c.SERVER, c.BOTNAME, c.PASSWORD, loop=loop)
 
-        result = masterbot.rest_api.rooms_info(room_name=c.POLL_STATUS_ROOM).json()
+        result = masterbot.rest.rooms_info(room_name=c.POLL_STATUS_ROOM).json()
         statusroom = m.create(m.Room, result['room'])
         pollmanager = pollutil.PollManager(master=masterbot, botname=c.BOTNAME, statusroom=statusroom.to_roomref())
 
@@ -51,6 +51,6 @@ async def go() -> None:
 
         async with masterbot:
             print(f'{c.BOTNAME} is ready')
-            await masterbot.client.disconnection()
+            await masterbot.ddp.disconnection()
 
 loop.run_until_complete(go())
