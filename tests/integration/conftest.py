@@ -12,7 +12,8 @@ from ..utils import random_string
 _admin_user = None
 
 
-def pytest_sessionstart(session: pytest.Session) -> None:
+@pytest.fixture(scope="module", autouse=True)
+def setup_admin() -> None:
     """This function is executed before any integration test is run.
 
     The admin is created her because the first user is by default admin
