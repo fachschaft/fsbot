@@ -2,8 +2,8 @@ import asyncio
 from typing import Iterable, List
 
 import pytest
-from rocketchat_API.rocketchat import RocketChat as RestClient
 
+import rocketbot.client as client
 import rocketbot.master as master
 import rocketbot.models as m
 
@@ -20,7 +20,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
 
     global _admin_user
 
-    result = RestClient().users_register(
+    result = client.RestClient().users_register(
         username='admin',
         name='Administrator',
         email='admin@example.com',
@@ -28,7 +28,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     if result['success']:
         _admin_user = m.create(m.User, result['user'])
     else:
-        restClient = RestClient(user='admin', password='admin')
+        restClient = client.RestClient(user='admin', password='admin')
         result = restClient.users_info(username='admin').json()
         _admin_user = m.create(m.User, result['user'])
 

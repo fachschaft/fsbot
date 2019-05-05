@@ -1,5 +1,5 @@
 import asyncio
-from typing import AsyncIterator
+from typing import AsyncIterator, Awaitable, Callable
 
 import pytest
 from asynctest import MagicMock
@@ -38,20 +38,45 @@ async def pollbot(bot: master.Master, statusroom: m.Room) -> AsyncIterator[maste
         yield bot
 
 
+def num_tasks() -> int:
+    return len(asyncio.all_tasks())
+
+
+async def finish_all_tasks(num_tasks: int) -> None:
+    # TODO(Change to context manager?)
+    tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+    # +1 for current task
+    tasks_left = len(tasks) - num_tasks + 1
+    for t in asyncio.as_completed(tasks):
+        await t
+        tasks_left -= 1
+        if tasks_left == 0:
+            break
+
+
+def expect_message(event: asyncio.Event) -> Callable[[m.Message], Awaitable[None]]:
+    async def f(message: m.Message) -> None:
+        event.set()
+    return f
+
+
 @pytest.mark.asyncio
 async def test_poll_push_to_public(
         event_loop: asyncio.AbstractEventLoop, pollbot: master.Master,
         user: master.Master, public_channel: m.Room) -> None:
     # Register a bot waiting for the poll which resolves a future
-    future = event_loop.create_future()
+    event = asyncio.Event()
     user.bots.append(bots.RoomCustomBot(
-        master=user, whitelist=[public_channel.name], callback=asyncio.coroutine(future.set_result)))
+        master=user, whitelist=[public_channel.name], callback=expect_message(event)))
 
     async with user:
+        tasks = num_tasks()
         roomid = await user.ddp.create_direct_message(pollbot._username)
         await user.ddp.send_message(roomid, 'poll test 1')
         await user.ddp.send_message(roomid, f'poll_push #{public_channel.name}')
-        assert await asyncio.wait_for(future, 3)
+
+        await finish_all_tasks(tasks)
+        assert event.is_set()
 
 
 @pytest.mark.asyncio
@@ -67,7 +92,11 @@ async def test_poll_push_to_private(
         master=user, whitelist=[private_group.name], callback=asyncio.coroutine(future.set_result)))
 
     async with user:
+        tasks = num_tasks()
+
         roomid = await user.ddp.create_direct_message(pollbot._username)
         await user.ddp.send_message(roomid, 'poll test 1')
         await user.ddp.send_message(roomid, f'poll_push #{private_group.name}')
+
+        await finish_all_tasks(tasks)
         assert await asyncio.wait_for(future, 3)

@@ -3,16 +3,12 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
-import time
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 
-import requests
 from ddp_asyncio import DDPClient
 from ddp_asyncio.exceptions import RemoteMethodError
 from ddp_asyncio.subscription import Subscription
-from rocketchat_API.rocketchat import (
-    RocketAuthenticationException, RocketChat, RocketConnectionException
-)
+from rocketchat_API.rocketchat import RocketChat
 
 import rocketbot.exception as exp
 import rocketbot.models as m
@@ -223,34 +219,36 @@ class RestClient(RocketChat):  # type: ignore
     Extends the rocketchat_api capabilities
     """
 
-    def login(self, user: str, password: str) -> requests.Response:
-        """Copied from RocketChat_API
-        Extended with retry logic due to ratelimiter (status_code 429)
-        """
-        while True:
-            login_request = requests.post(
-                self.server_url + self.API_path + 'login',
-                data={'username': user, 'password': password},
-                verify=self.ssl_verify,
-                proxies=self.proxies)
-            if login_request.status_code == 401:
-                raise RocketAuthenticationException()
-            if login_request.status_code == 429:
-                reset = int(login_request.headers['X-RateLimit-Reset']) / 1000
-                delay = reset - time.time()
-                logger.warning(f"RestClient: Delay login for {delay}s due to rate limiter.")
-                time.sleep(delay)
-                continue
+    # TODO(make wrapper async, problem with rate limiter)
+    # async def login(self, user: str, password: str) -> requests.Response:
+    #     """Copied from RocketChat_API
+    #     Extended with retry logic due to ratelimiter (status_code 429)
+    #     """
+    #     while True:
+    #         login_request = requests.post(
+    #             self.server_url + self.API_path + 'login',
+    #             data={'username': user, 'password': password},
+    #             verify=self.ssl_verify,
+    #             proxies=self.proxies)
+    #         if login_request.status_code == 401:
+    #             raise RocketAuthenticationException()
+    #         if login_request.status_code == 429:
+    #             reset = int(login_request.headers['X-RateLimit-Reset']) / 1000
+    #             delay = reset - time.time()
+    #             logger.exception(f"RestClient: Delay login for {delay}s due to rate limiter.")
+    #             #time.sleep(delay)
+    #             return login_request
+    #             continue
 
-            if login_request.status_code == 200:
-                if login_request.json().get('status') == "success":
-                    self.headers['X-Auth-Token'] = login_request.json().get('data').get('authToken')
-                    self.headers['X-User-Id'] = login_request.json().get('data').get('userId')
-                    return login_request
-                else:
-                    raise RocketAuthenticationException()
-            else:
-                raise RocketConnectionException(login_request.status_code)
+    #         if login_request.status_code == 200:
+    #             if login_request.json().get('status') == "success":
+    #                 self.headers['X-Auth-Token'] = login_request.json().get('data').get('authToken')
+    #                 self.headers['X-User-Id'] = login_request.json().get('data').get('userId')
+    #                 return login_request
+    #             else:
+    #                 raise RocketAuthenticationException()
+    #         else:
+    #             raise RocketConnectionException(login_request.status_code)
 
 
 async def _exception_wrapper(event_name: str, callback: Awaitable[None]) -> None:
@@ -259,8 +257,8 @@ async def _exception_wrapper(event_name: str, callback: Awaitable[None]) -> None
         await callback
     except asyncio.CancelledError:
         logger.info(f'Subscription callback for {event_name} canceled')
-    except Exception as e:
-        logger.error(f'Caught exception in subscription callback: {e}')
+    except Exception:
+        logger.exception(f'Caught exception in subscription callback')
 
 
 async def _subscription_handler_wrapper(

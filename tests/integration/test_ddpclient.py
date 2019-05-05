@@ -50,6 +50,7 @@ async def test_login(anonym_client: c.DdpClient, user_user: m.User) -> None:
     assert loginresult is not None
 
 
+@pytest.mark.skip
 @pytest.mark.asyncio
 async def test_send_message(client: c.DdpClient, public_channel: m.Room) -> None:
     msg = await client.send_message(public_channel._id, 'testmessage')
