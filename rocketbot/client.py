@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import asyncio
+import logging
 import re
 import time
-import traceback
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 
 import requests
@@ -15,24 +17,7 @@ from rocketchat_API.rocketchat import (
 import rocketbot.exception as exp
 import rocketbot.models as m
 
-
-async def _subscription_cb_wrapper(
-        col_q: Any, event_name: str,
-        callback: Callable[[m.SubscriptionResult], Awaitable[Any]]
-) -> None:
-    """Wrapper for a subscription callback with handles incoming messages and adds a basic errorhandling
-    """
-    while True:
-        event = await col_q.get()
-        try:
-            if event['type'] == 'changed':
-                result = m.SubscriptionResult(**event['fields'])
-                if event_name == result.eventName:
-                    await callback(result)
-        except exp.RocketCancelSubscription:
-            break
-        except Exception:
-            traceback.print_exc()
+logger = logging.getLogger(__name__)
 
 
 class DdpClient:
@@ -41,8 +26,9 @@ class DdpClient:
     Implements all available rocketchat methods and subscriptions
     """
     def __init__(self, address: str, loop: asyncio.AbstractEventLoop) -> None:
+        self.logged_in = False
         self.client = DDPClient(address)
-        self.tasks: List[asyncio.Task[Any]] = []
+        self.subscription_tasks: List[asyncio.Task[Any]] = []
         self.subscriptions: Dict[str, Subscription] = {}
         self.loop = loop
 
@@ -53,6 +39,7 @@ class DdpClient:
             except RemoteMethodError as e:
                 match = re.match(r'.*?([0-9]+) seconds.*\[too-many-requests\]', e.args[0])
                 if match:
+                    logger.warning(f"DDPClient: Delay {method} for {match.groups()[0]}s due to rate limiter.")
                     await asyncio.sleep(int(match.groups()[0]))
                 else:
                     raise
@@ -68,20 +55,23 @@ class DdpClient:
         await self.client.disconnection()
 
     async def disconnect(self) -> None:
-        """Disconnect by caneling all running tasks
+        """Disconnect by canceling all running subscription tasks
         """
-        for task in self.tasks:
+        for task in self.subscription_tasks:
             task.cancel()
         await self.client.disconnect()
 
     async def login(self, username: str, password: str) -> m.LoginResult:
         """Login with the given credentials"""
         response = await self._call("login", {"user": {"username": username}, "password": password})
+        self.logged_in = True
         return m.create(m.LoginResult, response)
 
     async def logout(self) -> None:
         """Logout"""
-        await self._call("logout")
+        if self.logged_in:
+            await self._call("logout")
+            self.logged_in = False
 
     # async def getUserRoles(self):
     #     """This method call is used to get server-wide special users and their
@@ -203,19 +193,21 @@ class DdpClient:
     async def subscribe_room(
             self, roomId: str,
             callback: Callable[[m.SubscriptionResult], Awaitable[Any]]
-    ) -> Subscription:
+    ) -> asyncio.Task[None]:
         """Subscribe for updates for the given room
         """
         col = self.client.get_collection('stream-room-messages')
         col._data['id'] = {}
 
         col_q = col.get_queue()
-        task = self.loop.create_task(_subscription_cb_wrapper(col_q, roomId, callback))
-        self.tasks.append(task)
+        task = self.loop.create_task(_subscription_handler_wrapper(col_q, roomId, callback))
+        self.loop.create_task(_watch_subscription_callback(task, roomId))
+
+        self.subscription_tasks.append(task)
 
         if roomId not in self.subscriptions:
             self.subscriptions[roomId] = await self.client.subscribe("stream-room-messages", roomId, True)
-        return self.subscriptions[roomId]
+        return task
 
     async def subscribe_my_messages(self, callback: Callable[[m.SubscriptionResult], Awaitable[Any]]) -> Subscription:
         """Subscribe to the personal '__my_messages__' topic which receives updates for:
@@ -232,6 +224,9 @@ class RestClient(RocketChat):  # type: ignore
     """
 
     def login(self, user: str, password: str) -> requests.Response:
+        """Copied from RocketChat_API
+        Extended with retry logic due to ratelimiter (status_code 429)
+        """
         while True:
             login_request = requests.post(
                 self.server_url + self.API_path + 'login',
@@ -243,6 +238,7 @@ class RestClient(RocketChat):  # type: ignore
             if login_request.status_code == 429:
                 reset = int(login_request.headers['X-RateLimit-Reset']) / 1000
                 delay = reset - time.time()
+                logger.warning(f"RestClient: Delay login for {delay}s due to rate limiter.")
                 time.sleep(delay)
                 continue
 
@@ -255,3 +251,40 @@ class RestClient(RocketChat):  # type: ignore
                     raise RocketAuthenticationException()
             else:
                 raise RocketConnectionException(login_request.status_code)
+
+
+async def _exception_wrapper(event_name: str, callback: Awaitable[None]) -> None:
+    """Wrapper for coroutines to catch and log exceptions"""
+    try:
+        await callback
+    except asyncio.CancelledError:
+        logger.info(f'Subscription callback for {event_name} canceled')
+    except Exception as e:
+        logger.error(f'Caught exception in subscription callback: {e}')
+
+
+async def _subscription_handler_wrapper(
+        col_q: Any, event_name: str,
+        callback: Callable[[m.SubscriptionResult], Awaitable[Any]]
+) -> None:
+    """Wrapper for a subscription callback which creates a task for each incoming message
+    """
+    while True:
+        event = await col_q.get()
+        if event['type'] == 'changed':
+            result = m.SubscriptionResult(**event['fields'])
+            if event_name == result.eventName:
+                callback_coro = _exception_wrapper(event_name, callback(result))
+                # Offload into task such that new messages can be handled directly
+                asyncio.create_task(callback_coro)
+
+
+async def _watch_subscription_callback(task: asyncio.Task[None], event: str) -> None:
+    """Watch subscription tasks for debug purposes"""
+    logger.debug(f"Subscription handler for {event} started")
+    try:
+        await task
+    except asyncio.CancelledError:
+        logger.debug(f"Subscription handler for {event} stopped")
+    except Exception as e:
+        logger.warning(f"Exception in subscription handler for {event}: {e}")

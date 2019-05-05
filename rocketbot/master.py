@@ -1,5 +1,7 @@
 import asyncio
+import logging
 import re
+import signal
 from typing import Any, Dict, List, Optional
 
 from rocketchat_API.APIExceptions.RocketExceptions import (
@@ -27,6 +29,7 @@ class Master:
             rest_url = f'http://{base_url}'
 
         self.ddp = client.DdpClient(ws_url, loop)
+        # TODO(Move to __aenter)
         self.rest = client.RestClient(user=username, password=password, server_url=rest_url)
         self._username = username
         self._password = password
@@ -35,7 +38,13 @@ class Master:
         self._users_cache: Dict[str, m.UserRef] = {}
         self.bots: List[b.BaseBot] = []
 
+        # Add signal handler for graceful stop
+        signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
+        for s in signals:
+            loop.add_signal_handler(s, lambda s=s: asyncio.create_task(self.signal_handler(s)))
+
     async def __aenter__(self) -> 'Master':
+        logging.debug(f"Called __aenter__ for user {self._username}")
         await self.ddp.connect()
         await self.ddp.login(self._username, self._password)
 
@@ -44,8 +53,8 @@ class Master:
         return self
 
     async def __aexit__(self, exception_type: Any, exception_value: Any, traceback: Any) -> None:
-        await self.ddp.logout()
-        await self.ddp.disconnect()
+        logging.debug(f"Called __aexit__ for user {self._username}")
+        await self.shutdown()
 
     async def room(self, *, room_id: Optional[str] = None, room_name: Optional[str] = None) -> m.Room:
         if room_id is not None:
@@ -92,6 +101,7 @@ class Master:
     async def enable_bots(self) -> None:
         """Enable bots by subscribing the following callback to all messages
         """
+        # TODO(parallelize bot.handle)
         async def _callback(result: m.SubscriptionResult) -> None:
             if result.room is None:
                 return
@@ -101,3 +111,14 @@ class Master:
                     await bot.handle(result.message)
 
         await self.ddp.subscribe_my_messages(_callback)
+
+    async def signal_handler(self, sig: signal.Signals) -> None:
+        logging.info(f"{sig.name} received. Shuting down {self._username}")
+        await self.shutdown()
+
+    async def shutdown(self) -> None:
+        """Graceful shutdown master by logging out and disconnecting the clients"""
+        # TODO(parallelize logout)
+        await self.ddp.logout()
+        await self.ddp.disconnect()
+        self.rest.logout()
