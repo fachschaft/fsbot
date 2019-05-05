@@ -349,10 +349,11 @@ class Poll:
         # because the initial message is without reactions and would trigger
         # an update because reactions are missing
         reactions = self._get_reactions()
-        for o in self.options:
-            o.users.clear()
-        for o in self.additional_people:
-            o.users.clear()
+        if self._poll_cache is not None:
+            for o in self.options:
+                o.users.clear()
+            for o in self.additional_people:
+                o.users.clear()
 
         poll_msg = await master.ddp.send_message(roomid, msg)
         self.poll_msg_id = poll_msg.id
