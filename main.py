@@ -39,13 +39,14 @@ async def main() -> None:
     dms = com.Dms(master=masterbot, token=c.DMS_TOKEN)
     etm = com.Etm(master=masterbot, pollmanager=pollmanager)
     food = com.Food(master=masterbot)
+    notify = com.CatchAll(master=masterbot, callback=com.private_message_user)
 
     # Public command bot
     masterbot.bots.append(
         bots.RoomTypeMentionCommandBot(
             master=masterbot, username=c.BOTNAME,
             enable_public_channel=True, enable_private_groups=True,
-            commands=[usage, ping]))
+            commands=[ping, notify]))
     # Direct message bot
     masterbot.bots.append(
         bots.RoomTypeCommandBot(
