@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class MessageType(Enum):
+    DISCUSSION_CREATED = 'discussion-created'
     MESSAGE_PINNED = 'message_pinned'
     MESSAGE_REMOVED = 'rm'
     MESSAGE_SNIPPETED = 'message_snippeted'
