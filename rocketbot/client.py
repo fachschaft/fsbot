@@ -12,6 +12,7 @@ from rocketchat_API.rocketchat import RocketChat
 
 import rocketbot.exception as exp
 import rocketbot.models as m
+import rocketbot.utils.sentry as sentry
 
 logger = logging.getLogger(__name__)
 
@@ -257,6 +258,7 @@ async def _exception_wrapper(event_name: str, callback: Awaitable[None]) -> None
     except asyncio.CancelledError:
         logger.info(f'Subscription callback for {event_name} canceled')
     except Exception:
+        sentry.exception()
         logger.exception(f'Caught exception in subscription callback')
 
 
@@ -281,5 +283,6 @@ async def _subscription_handler_wrapper(
         except asyncio.CancelledError:
             logger.debug(f"Subscription handler for {event_name} stopped")
             return
-        except Exception as e:
-            logger.exception(f"Exception in subscription handler for {event_name}: {e}")
+        except Exception:
+            logger.exception(f"Exception in subscription handler for {event_name}.")
+            sentry.exception()

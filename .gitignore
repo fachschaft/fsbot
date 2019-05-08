@@ -4,6 +4,7 @@ bot_config.py
 # Python
 **/__pycache__
 *.egg-info
+.pytest_cache/
 
 # VS Code
 .vscode

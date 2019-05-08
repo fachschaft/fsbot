@@ -1,17 +1,6 @@
 import asyncio
 import logging
 
-import rocketbot.bots as bots
-import rocketbot.commands as com
-import rocketbot.master as master
-import rocketbot.models as m
-import rocketbot.utils.poll as pollutil
-
-try:
-    import bot_config as c
-except ModuleNotFoundError:
-    raise Exception('Please provide the login credentials in a bot_config.py') from None
-
 # Configure logging
 console = logging.StreamHandler()
 console.setFormatter(logging.Formatter('%(asctime)s %(levelname)s [%(name)s]: %(message)s', "%Y-%m-%d %H:%M:%S"))
@@ -22,6 +11,17 @@ root.addHandler(console)
 # Configure logglevels
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger("rocketbot").setLevel(logging.DEBUG)
+
+import rocketbot.bots as bots  # noqa: E402
+import rocketbot.commands as com  # noqa: E402
+import rocketbot.master as master  # noqa: E402
+import rocketbot.models as m  # noqa: E402
+import rocketbot.utils.poll as pollutil  # noqa: E402
+
+try:
+    import bot_config as c
+except ModuleNotFoundError:
+    raise Exception('Please provide the login credentials in a bot_config.py') from None
 
 
 async def main() -> None:

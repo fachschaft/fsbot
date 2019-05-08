@@ -7,3 +7,5 @@ MENSA_CACHE_URL = 'https://infomonitor.somewhere.com/json/mensa/'
 
 DMS_TOKEN = 'no token'
 POLL_STATUS_ROOM = ''
+
+SENTRY_URL = None

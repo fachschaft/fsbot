@@ -12,7 +12,6 @@ import rocketbot.utils.poll as pollutil
 from ..utils import patch_module
 
 mock_bot_config = MagicMock()
-mock_bot_config.MENSA_CACHE_URL = 'https://www.mensa_dummy.de/api'
 with patch_module('bot_config', mock_bot_config):
     import rocketbot.commands as com
 
@@ -44,13 +43,12 @@ def num_tasks() -> int:
 
 async def finish_all_tasks(num_tasks: int) -> None:
     # TODO(Change to context manager?)
-    tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-    # +1 for current task
-    tasks_left = len(tasks) - num_tasks + 1
+    tasks = [t for t in asyncio.all_tasks()]
+    tasks_left = len(tasks) - num_tasks
     for t in asyncio.as_completed(tasks):
         await t
         tasks_left -= 1
-        if tasks_left == 0:
+        if tasks_left <= 0:
             break
 
 
@@ -63,7 +61,11 @@ def expect_message(event: asyncio.Event) -> Callable[[m.Message], Awaitable[None
 @pytest.mark.asyncio
 async def test_poll_push_to_public(
         event_loop: asyncio.AbstractEventLoop, pollbot: master.Master,
-        user: master.Master, public_channel: m.Room) -> None:
+        user: master.Master, public_channel: m.Room, admin: master.Master) -> None:
+
+    admin.rest.channels_invite(public_channel._id, pollbot.rest.headers['X-User-Id'])
+    admin.rest.channels_invite(public_channel._id, user.rest.headers['X-User-Id'])
+
     # Register a bot waiting for the poll which resolves a future
     event = asyncio.Event()
     user.bots.append(bots.RoomCustomBot(
