@@ -197,7 +197,6 @@ class DdpClient:
 
         col_q = col.get_queue()
         task = self.loop.create_task(_subscription_handler_wrapper(col_q, roomId, callback))
-        self.loop.create_task(_watch_subscription_callback(task, roomId))
 
         self.subscription_tasks.append(task)
 
@@ -265,24 +264,22 @@ async def _subscription_handler_wrapper(
         col_q: Any, event_name: str,
         callback: Callable[[m.SubscriptionResult], Awaitable[Any]]
 ) -> None:
-    """Wrapper for a subscription callback which creates a task for each incoming message
+    """Wrapper for a subscription callback providing:
+    - Basic error handling and logging
+    - Create a task for each incoming message
     """
+    logger.debug(f"Subscription handler for {event_name} started")
     while True:
-        event = await col_q.get()
-        if event['type'] == 'changed':
-            result = m.SubscriptionResult(**event['fields'])
-            if event_name == result.eventName:
-                callback_coro = _exception_wrapper(event_name, callback(result))
-                # Offload into task such that new messages can be handled directly
-                asyncio.create_task(callback_coro)
-
-
-async def _watch_subscription_callback(task: asyncio.Task[None], event: str) -> None:
-    """Watch subscription tasks for debug purposes"""
-    logger.debug(f"Subscription handler for {event} started")
-    try:
-        await task
-    except asyncio.CancelledError:
-        logger.debug(f"Subscription handler for {event} stopped")
-    except Exception as e:
-        logger.warning(f"Exception in subscription handler for {event}: {e}")
+        try:
+            event = await col_q.get()
+            if event['type'] == 'changed':
+                result = m.SubscriptionResult(**event['fields'])
+                if event_name == result.eventName:
+                    callback_coro = _exception_wrapper(event_name, callback(result))
+                    # Offload into task such that new messages can be handled directly
+                    asyncio.create_task(callback_coro)
+        except asyncio.CancelledError:
+            logger.debug(f"Subscription handler for {event_name} stopped")
+            return
+        except Exception as e:
+            logger.exception(f"Exception in subscription handler for {event_name}: {e}")
