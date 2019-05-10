@@ -1,11 +1,13 @@
 import dataclasses
 import enum
+import logging
 import re
 from typing import Any, Dict, Optional, Type, TypeVar, cast, overload
 
 import ejson
 
 import rocketbot.exception as exp
+import rocketbot.utils.sentry as sentry
 from rocketbot.models.apiobjects import (
     ApiObject, Attachment, File, Message, Room, RoomRef, RoomRef2, User,
     UserRef
@@ -15,6 +17,8 @@ from rocketbot.models.clientresults import (
 )
 from rocketbot.models.enums import MessageType, RoleType, RoomType
 from rocketbot.models.rcdatetime import RcDatetime
+
+logger = logging.getLogger(__name__)
 
 
 def new_converter(data: Any) -> Dict[str, Any]:
@@ -92,12 +96,16 @@ def _save_dataclass_create(cls_: Type[T], kwargs: Dict[str, Any]) -> T:
         if not m:
             raise e
         key = m.group(1)
-        print(f"Unexpected key '{key}' for {cls_.__name__}. Value was '{kwargs[key]}''")
+        msg = f"Unexpected key '{key}' for {cls_.__name__}. Value was '{kwargs[key]}''"
+        logger.warning(msg)
+        sentry.message(msg)
         del kwargs[key]
         return _save_dataclass_create(cls_, kwargs)
     except ValueError as e:
         value = e.__str__().split("'")[1]
         key = [k for (k, v) in kwargs.items() if v == value][0]
-        print(f"Unexpected value '{value}' for '{key}' in {cls_.__name__}")
+        msg = f"Unexpected value '{value}' for '{key}' in {cls_.__name__}"
+        logger.warning(msg)
+        sentry.message(msg)
         del kwargs[key]
         return _save_dataclass_create(cls_, kwargs)
