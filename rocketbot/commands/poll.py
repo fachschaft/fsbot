@@ -4,6 +4,7 @@ import re
 from typing import Any, List, Tuple
 
 import rocketbot.commands as c
+import rocketbot.exception as exp
 import rocketbot.models as m
 import rocketbot.utils.poll as pollutil
 
@@ -49,14 +50,16 @@ class Poll(c.BaseCommand):
                     return
 
                 poll = self.pollmanager.polls.last_active_by_roomid[message.roomid]
-                # Only public rooms are listed in 'channels'
                 roomref = [r for r in message.channels if r.name == room_name]
                 if len(roomref) != 0:
-                    await self.pollmanager.push(poll, roomref[0]._id)
+                    try:
+                        await self.pollmanager.push(poll, roomref[0]._id)
+                    except exp.RocketClientException:
+                        await self.master.ddp.send_message(
+                            message.roomid,
+                            "Could not send message. Am I part of that channel?")
                     return
-                # For private rooms, the id has to be retrieved
-                room = await self.master.room(room_name=room_name)
-                await self.pollmanager.push(poll, room._id)
+                await self.master.ddp.send_message(message.roomid, "No roomref found. Is this a valid room?")
         finally:
             # Set the event will trigger the next queued handle call
             event.set()

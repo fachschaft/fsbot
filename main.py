@@ -10,7 +10,7 @@ root.addHandler(console)
 
 # Configure logglevels
 logging.getLogger().setLevel(logging.INFO)
-logging.getLogger("rocketbot").setLevel(logging.DEBUG)
+logging.getLogger("rocketbot").setLevel(logging.INFO)
 
 import rocketbot.bots as bots  # noqa: E402
 import rocketbot.commands as com  # noqa: E402

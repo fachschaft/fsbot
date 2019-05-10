@@ -164,6 +164,8 @@ class DdpClient:
         """Send a message to a room
         """
         response = await self._call("sendMessage", {"rid": roomId, "msg": message})
+        if response is None:
+            raise exp.RocketClientException("Could not send message.")
         return m.create(m.Message, response)
 
     async def update_message(self, message: Union[m.Message, Dict[str, Any]]) -> None:

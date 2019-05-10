@@ -341,8 +341,8 @@ class Poll:
     async def send_new_poll_message(self, master: Master, roomid: str, statusroomid: str) -> None:
         """Send a new message including reactions
         """
-        if self._poll_msg_id:
-            await master.ddp.delete_message(self.poll_msg_id)
+
+        old_msg_id = self._poll_msg_id
         msg = await self.to_message(master)
 
         # Save reactions and clear users in order to avoid a back and forth
@@ -359,6 +359,10 @@ class Poll:
         self.poll_msg_id = poll_msg.id
         self.roomid = roomid
         await master.ddp.update_message({'_id': self.poll_msg_id, 'reactions': reactions})
+
+        if old_msg_id:
+            # Delete old message after the new one is send in case something does not work
+            await master.ddp.delete_message(old_msg_id)
 
         if self._status_msg_id is None:
             status_msg = await master.ddp.send_message(statusroomid, _serialize_poll(self))
