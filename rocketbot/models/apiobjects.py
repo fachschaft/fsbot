@@ -25,6 +25,12 @@ class Attachment:
     message_link: Optional[str] = None
     attachments: List[Attachment] = dataclasses.field(default_factory=list)
 
+    # Img attachment
+    image_dimensions: Optional[Dict[str, int]] = None
+    image_preview: Optional[str] = None
+    image_type: Optional[str] = None
+    image_size: Optional[str] = None
+
     def __post_init__(self) -> None:
         self.ts = m.create(m.RcDatetime, self.ts)
         if len(self.attachments) != 0:
