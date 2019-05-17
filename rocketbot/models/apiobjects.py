@@ -66,6 +66,10 @@ class ParsedUrl:
     port: Optional[str] = None
     query: Optional[str] = None
     search: Optional[str] = None
+    slashes: Optional[bool] = None
+    path: Optional[str] = None
+    auth: Optional[str] = None
+    href: Optional[str] = None
 
 
 class ApiObject:
