@@ -1,7 +1,8 @@
 import asyncio
 import logging
+import time
 
-# Configure logging
+# Configure logging before importing because some submodule tries to configures the logger
 console = logging.StreamHandler()
 console.setFormatter(logging.Formatter('%(asctime)s %(levelname)s [%(name)s]: %(message)s', "%Y-%m-%d %H:%M:%S"))
 root = logging.getLogger()
@@ -12,11 +13,14 @@ root.addHandler(console)
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger("rocketbot").setLevel(logging.INFO)
 
+from rocketchat_API.APIExceptions.RocketExceptions import RocketConnectionException  # noqa: E402
+
 import rocketbot.bots as bots  # noqa: E402
 import rocketbot.commands as com  # noqa: E402
 import rocketbot.master as master  # noqa: E402
 import rocketbot.models as m  # noqa: E402
 import rocketbot.utils.poll as pollutil  # noqa: E402
+import rocketbot.utils.sentry as sentry  # noqa: E402
 
 try:
     import bot_config as c
@@ -65,4 +69,13 @@ async def main() -> None:
         logging.info(f'{c.BOTNAME} is ready')
         await masterbot.ddp.disconnection()
 
-asyncio.run(main())
+while True:
+    try:
+        asyncio.run(main())
+        # If run terminates without exception end the while true loop
+        break
+    except RocketConnectionException:
+        logging.error("Failed to connect. Retry in 60s")
+        time.sleep(60)
+    except Exception:
+        sentry.exception()
