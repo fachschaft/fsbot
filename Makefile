@@ -5,7 +5,7 @@ all: mypy lint sort_import
 run:
 	python main.py
 
-push: update utest mypy lint verify_import itest
+push: update utest mypy lint verify_import itest _check_modified
 	git push
 
 update:
@@ -41,3 +41,6 @@ restart_testserver:
 
 _pre_test:
 	touch bot_config.py
+
+_check_modified:
+	git diff-index --quiet HEAD
