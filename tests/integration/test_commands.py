@@ -2,18 +2,12 @@ import asyncio
 from typing import AsyncIterator, Awaitable, Callable
 
 import pytest
-from asynctest import MagicMock
 
 import rocketbot.bots as bots
+import rocketbot.commands as com
 import rocketbot.master as master
 import rocketbot.models as m
 import rocketbot.utils.poll as pollutil
-
-from ..utils import patch_module
-
-mock_bot_config = MagicMock()
-with patch_module('bot_config', mock_bot_config):
-    import rocketbot.commands as com
 
 
 @pytest.yield_fixture

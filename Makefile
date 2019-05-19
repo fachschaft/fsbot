@@ -14,13 +14,13 @@ update:
 
 test: utest itest
 
-utest:
+utest: _pre_test
 	pytest tests/unit
 
-itest:
+itest: _pre_test
 	pytest tests/integration
 
-test_cov:
+test_cov: _pre_test
 	pytest tests --cov=rocketbot
 	codecov
 
@@ -38,3 +38,6 @@ verify_import:
 
 restart_testserver:
 	sudo venv/bin/docker-compose -f docker-compose-testserver.yml down && sudo venv/bin/docker-compose -f docker-compose-testserver.yml up -d && until curl http://localhost:3000/api/v1/info; do sleep 5; echo "waiting for Rocket.Chat server to start"; done
+
+_pre_test:
+	touch bot_config.py

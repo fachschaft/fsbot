@@ -16,7 +16,7 @@ _admin_user = None
 def setup_admin() -> None:
     """This function is executed before any integration test is run.
 
-    The admin is created her because the first user is by default admin
+    The admin is created here because the first user is by default admin
     """
 
     global _admin_user

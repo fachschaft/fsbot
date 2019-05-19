@@ -3,18 +3,21 @@ from typing import Any, Callable, List
 import pytest
 from asynctest import CoroutineMock, MagicMock, patch
 
-from ..utils import patch_module
+import rocketbot.utils.meals as meals
 
-mock_bot_config = MagicMock()
-mock_bot_config.MENSA_CACHE_URL = 'https://www.mensa_dummy.de/api'
-with patch_module('bot_config', mock_bot_config):
-    import rocketbot.utils.meals as meals
+from ..utils import patch_module
 
 MEAL_DATA = [
     ("day 1", [{"meals": ["Kichererbsenpolenta"]}, {"meals": ["Schweinesteak"]}]),
     ("day 2", [{"meals": ["Eieromelette"]}]),
     ("day 3", [{"meals": ["Merlanfilet paniert"]}]),
 ]
+
+
+def setup_module() -> None:
+    mock_bot_config = MagicMock()
+    mock_bot_config.MENSA_CACHE_URL = 'https://www.mensa_dummy.de/api'
+    patch_module(meals, 'bot_config', mock_bot_config)
 
 
 def mock_get_meals(data: List[Any]) -> Callable[[str], MagicMock]:
