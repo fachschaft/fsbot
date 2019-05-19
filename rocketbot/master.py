@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import re
@@ -37,7 +39,7 @@ class Master:
         self._roomname_cache: Dict[str, m.Room] = {}
         self._users_cache: Dict[str, m.UserRef] = {}
         self.bots: List[b.BaseBot] = []
-        self._active_callbacks: List[asyncio.Task] = []
+        self._active_callbacks: List[asyncio.Task[Any]] = []
 
         # Add signal handler for graceful stop
         signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
