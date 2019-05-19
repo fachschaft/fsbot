@@ -67,9 +67,9 @@ async def test_poll_push_to_private(
     admin.rest.groups_invite(private_group._id, pollbot.rest.headers['X-User-Id'])
     admin.rest.groups_invite(private_group._id, user.rest.headers['X-User-Id'])
     # Register a bot waiting for the poll which resolves a future
-    future = event_loop.create_future()
+    event = asyncio.Event()
     user.bots.append(bots.RoomCustomBot(
-        master=user, whitelist=[private_group.name], callback=asyncio.coroutine(future.set_result)))
+        master=user, whitelist=[private_group.name], callback=expect_message(event)))
 
     async with user:
         roomid = await user.ddp.create_direct_message(pollbot._username)
@@ -77,4 +77,4 @@ async def test_poll_push_to_private(
         await user.ddp.send_message(roomid, f'poll_push #{private_group.name}')
 
         await pollbot.finish_all_tasks()
-        assert await asyncio.wait_for(future, 3)
+        assert event.is_set()
