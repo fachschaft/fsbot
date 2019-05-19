@@ -5,6 +5,7 @@ bot_config.py
 **/__pycache__
 *.egg-info
 .pytest_cache/
+.coverage
 
 # VS Code
 .vscode

@@ -37,6 +37,7 @@ class Master:
         self._roomname_cache: Dict[str, m.Room] = {}
         self._users_cache: Dict[str, m.UserRef] = {}
         self.bots: List[b.BaseBot] = []
+        self._active_callbacks: List[asyncio.Task] = []
 
         # Add signal handler for graceful stop
         signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
@@ -106,6 +107,10 @@ class Master:
             if result.room is None:
                 return
 
+            task = asyncio.current_task()
+            if task is not None:
+                self.add_task(task)
+
             for bot in self.bots:
                 if bot.is_applicable(result.room):
                     await bot.handle(result.message)
@@ -122,3 +127,17 @@ class Master:
         await self.ddp.logout()
         await self.ddp.disconnect()
         self.rest.logout()
+
+    def add_task(self, task: asyncio.Task[Any]) -> None:
+        '''Add a task to the master
+
+        All tasks are monitored and can be waited on graceful shutdown
+        '''
+        # Remove all finished tasks from list
+        self._active_callbacks = [t for t in self._active_callbacks if not t.done()]
+        self._active_callbacks.append(task)
+        logging.debug(f"Task added. Currently {len(self._active_callbacks)} active tasks")
+
+    async def finish_all_tasks(self) -> None:
+        while any(x for x in self._active_callbacks if not x.done()):
+            await asyncio.wait(self._active_callbacks)
