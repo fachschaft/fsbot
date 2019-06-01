@@ -77,5 +77,6 @@ while True:
     except RocketConnectionException:
         logging.error("Failed to connect. Retry in 60s")
         time.sleep(60)
-    except Exception:
+    except Exception as e:
+        logging.error(f"{type(e).__name__}: {e}")
         sentry.exception()
