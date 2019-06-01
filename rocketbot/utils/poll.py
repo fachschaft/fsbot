@@ -136,7 +136,7 @@ class PollManager:
                 pass
         for rid in roomids:
             room = self.master.rest.rooms_info(room_id=rid).json()
-            if 'name' in room['room']:
+            if room['success'] and 'name' in room['room']:
                 self.roomBot.rooms.add(room['room']['name'])
 
     async def create(self, roomid: str, msg_id: str, title: str, options: List[str]) -> None:
