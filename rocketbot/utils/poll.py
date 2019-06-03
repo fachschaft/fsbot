@@ -143,7 +143,7 @@ class PollManager:
         id = self.polls.new_id()
         poll = Poll(
             botname=self.botname, original_msg_id=msg_id,
-            title=title, vote_options=options, id=id, roomid=roomid)
+            title=title, vote_options=options, id=id, roomid=roomid, statusroomid=self.statusroom._id)
         await poll.send_new_poll_message(self.master, roomid, self.statusroom._id)
 
         room = await self.master.room(room_id=roomid)
@@ -254,13 +254,16 @@ def _deserialize_polloption(data: Dict[str, Any]) -> PollOption:
 
 
 class Poll:
-    def __init__(self, id: str, roomid: str, original_msg_id: str, botname: str, title: str, vote_options: List[str]):
+    def __init__(
+            self, id: str, roomid: str, original_msg_id: str,
+            botname: str, title: str, vote_options: List[str], statusroomid: str):
         self._poll_cache: Optional[PollCache] = None
         self._id = id
         self._roomid = roomid
         self._original_msg_id = original_msg_id
         self.botname = botname
         self.title = title
+        self.statusroomid = statusroomid
 
         self.created_on = m.RcDatetime.now()
         self._poll_msg_id: Optional[str] = None
@@ -364,23 +367,27 @@ class Poll:
             # Delete old message after the new one is send in case something does not work
             await master.ddp.delete_message(old_msg_id)
 
-        if self._status_msg_id is None:
-            status_msg = await master.ddp.send_message(statusroomid, _serialize_poll(self))
-            self.status_msg_id = status_msg.id
-        else:
-            await master.ddp.update_message({'_id': self.status_msg_id, 'msg': _serialize_poll(self)})
+        await self.upsert_statusmsg(master, statusroomid)
 
     async def resend_old_message(self, master: Master) -> None:
         """Resend the old message including reactions
         """
         if self.poll_msg_id is None:
             raise exp.RocketBotPollException('No old message to resend')
-        if self.status_msg_id is None:
-            raise exp.RocketBotPollException('Missing status message')
 
         msg = await self.to_message(master)
         await master.ddp.update_message({'_id': self.poll_msg_id, 'msg': msg, 'reactions': self._get_reactions()})
-        await master.ddp.update_message({'_id': self.status_msg_id, 'msg': _serialize_poll(self)})
+        await self.upsert_statusmsg(master, self.statusroomid)
+
+    async def upsert_statusmsg(self, master: Master, statusroomid: str) -> None:
+        try:
+            if self._status_msg_id is None:
+                status_msg = await master.ddp.send_message(statusroomid, _serialize_poll(self))
+                self.status_msg_id = status_msg.id
+            else:
+                await master.ddp.update_message({'_id': self.status_msg_id, 'msg': _serialize_poll(self)})
+        except Exception:
+            pass
 
     def _get_reactions(self) -> Dict[str, Dict[str, Any]]:
         """Get reactions by the current state
@@ -488,7 +495,8 @@ def _deserialize_poll(strdata: str) -> Poll:
         botname=data['botname'],
         original_msg_id=data['original_msg_id'],
         title=data['title'],
-        vote_options=[])
+        vote_options=[],
+        statusroomid="Notneeded")
 
     poll.created_on.value = datetime.datetime.strptime(data['created_on'], "%Y-%m-%dT%H:%M:%S.%f")
     poll.poll_msg_id = data['poll_msg_id']
