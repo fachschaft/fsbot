@@ -122,6 +122,7 @@ class Master:
     async def signal_handler(self, sig: signal.Signals) -> None:
         logging.info(f"{sig.name} received. Shuting down {self._username}")
         await self.shutdown()
+        exit(0)
 
     async def shutdown(self) -> None:
         """Graceful shutdown master by logging out and disconnecting the clients"""
