@@ -32,6 +32,7 @@ class RoleType(Enum):
     USER = 'user'
     ADMIN = 'admin'
     BOT = 'bot'
+    LEADER = 'leader'
 
 
 class RoomType(Enum):
