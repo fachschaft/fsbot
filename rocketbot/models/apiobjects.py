@@ -157,6 +157,7 @@ class Room:
     topic: Optional[str] = None
     customFields: Optional[Dict[str, Any]] = None
     muted: Optional[List[str]] = None
+    unmuted: Optional[List[str]] = None
     description: Optional[str] = None
     msgs: Optional[int] = None  # Number of msgs
     usersCount: Optional[int] = None
