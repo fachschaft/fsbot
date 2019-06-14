@@ -7,6 +7,7 @@ import rocketbot.commands as c
 import rocketbot.exception as exp
 import rocketbot.models as m
 import rocketbot.utils.poll as pollutil
+import rocketbot.utils.sentry as sentry
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,12 @@ class Poll(c.BaseCommand):
         event = await self._check_running_tasks(command)
         try:
             if command == 'poll':
-                await self.create_poll(args, message)
+                try:
+                    await self.create_poll(args, message)
+                except exp.RocketBotPollException as e:
+                    await self.master.ddp.send_message(message.roomid, str(e))
+                    sentry.exception()
+
             if command == 'poll_push':
                 match = re.match(r'\s*#(\S+)', args)
                 if not match:
@@ -54,10 +60,11 @@ class Poll(c.BaseCommand):
                 if len(roomref) != 0:
                     try:
                         await self.pollmanager.push(poll, roomref[0]._id)
-                    except exp.RocketClientException:
+                    except exp.RocketBotPollException as e:
                         await self.master.ddp.send_message(
                             message.roomid,
-                            "Could not send message. Am I part of that channel?")
+                            f"{e} - Am I part of that channel?")
+                        sentry.exception()
                     return
                 await self.master.ddp.send_message(message.roomid, "No roomref found. Is this a valid room?")
         finally:

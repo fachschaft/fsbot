@@ -355,20 +355,33 @@ class Poll:
             for o in self.additional_people:
                 o.users.clear()
 
-        poll_msg = await master.ddp.send_message(roomid, msg)
-        self.poll_msg_id = poll_msg.id
-        self.roomid = roomid
-        await master.ddp.update_message({'_id': self.poll_msg_id, 'reactions': reactions})
+        # Send new poll message
+        try:
+            poll_msg = await master.ddp.send_message(roomid, msg)
+            self.poll_msg_id = poll_msg.id
+            self.roomid = roomid
+            await master.ddp.update_message({'_id': self.poll_msg_id, 'reactions': reactions})
+        except exp.RocketClientException as e:
+            raise exp.RocketBotPollException('Could not send poll message/reactions') from e
 
+        # Delete old poll message
         if old_msg_id:
             # Delete old message after the new one is send in case something does not work
-            await master.ddp.delete_message(old_msg_id)
+            try:
+                await master.ddp.delete_message(old_msg_id)
+            except exp.RocketClientException:
+                # Do nothing if delete fails
+                pass
 
-        if self._status_msg_id is None:
-            status_msg = await master.ddp.send_message(statusroomid, _serialize_poll(self))
-            self.status_msg_id = status_msg.id
-        else:
-            await master.ddp.update_message({'_id': self.status_msg_id, 'msg': _serialize_poll(self)})
+        # Send/Update status message
+        try:
+            if self._status_msg_id is None:
+                status_msg = await master.ddp.send_message(statusroomid, _serialize_poll(self))
+                self.status_msg_id = status_msg.id
+            else:
+                await master.ddp.update_message({'_id': self.status_msg_id, 'msg': _serialize_poll(self)})
+        except exp.RocketClientException as e:
+            raise exp.RocketBotPollException('Could not send status message') from e
 
     async def resend_old_message(self, master: Master) -> None:
         """Resend the old message including reactions
