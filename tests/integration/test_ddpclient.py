@@ -34,7 +34,6 @@ async def client(anonym_client: c.DdpClient, user_user: m.User) -> AsyncIterable
     yield anonym_client
 
 
-@pytest.mark.skip
 @pytest.mark.asyncio
 async def test_basic_connect_disconnect(event_loop: asyncio.AbstractEventLoop) -> None:
     ws_url = 'ws://localhost:3000/websocket'
@@ -45,14 +44,12 @@ async def test_basic_connect_disconnect(event_loop: asyncio.AbstractEventLoop) -
     await client.disconnect()
 
 
-@pytest.mark.skip
 @pytest.mark.asyncio
 async def test_login(anonym_client: c.DdpClient, user_user: m.User) -> None:
     loginresult = await anonym_client.login(user_user.username, user_user.username)
     assert loginresult is not None
 
 
-@pytest.mark.skip
 @pytest.mark.asyncio
 async def test_send_message(client: c.DdpClient, public_channel: m.Room) -> None:
     msg = await client.send_message(public_channel._id, 'testmessage')

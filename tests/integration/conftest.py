@@ -59,76 +59,84 @@ def admin_user() -> m.User:
 
 
 @pytest.fixture
-def admin(admin_user: m.User, event_loop: asyncio.AbstractEventLoop) -> master.Master:
-    return master.Master('http://localhost:3000', admin_user.username, admin_user.username, tls=False, loop=event_loop)
+async def admin(admin_user: m.User, event_loop: asyncio.AbstractEventLoop) -> master.Master:
+    _admin = master.Master(
+        'http://localhost:3000', admin_user.username,
+        admin_user.username, tls=False, loop=event_loop)
+    await _admin.rest.login_async(admin_user.username, admin_user.username)
+    return _admin
 
 
 @pytest.fixture
-def bot_user(admin: master.Master) -> m.User:
-    return _get_or_create_user(admin, 'bot', 'saBOTeur', roles=['bot'])
+async def bot_user(admin: master.Master) -> m.User:
+    return await _get_or_create_user(admin, 'bot', 'saBOTeur', roles=['bot'])
 
 
 @pytest.fixture
-def bot(bot_user: m.User, event_loop: asyncio.AbstractEventLoop) -> master.Master:
-    return master.Master('http://localhost:3000', bot_user.username, bot_user.username, tls=False, loop=event_loop)
+async def bot(bot_user: m.User, event_loop: asyncio.AbstractEventLoop) -> master.Master:
+    _bot = master.Master('http://localhost:3000', bot_user.username, bot_user.username, tls=False, loop=event_loop)
+    await _bot.rest.login_async(bot_user.username, bot_user.username)
+    return _bot
 
 
 @pytest.fixture
-def user_user(admin: master.Master) -> m.User:
-    return _get_or_create_user(admin, 'user', 'FirstUser')
+async def user_user(admin: master.Master) -> m.User:
+    return await _get_or_create_user(admin, 'user', 'FirstUser')
 
 
 @pytest.fixture
-def user(user_user: m.User, event_loop: asyncio.AbstractEventLoop) -> master.Master:
-    return master.Master('http://localhost:3000', user_user.username, user_user.username, tls=False, loop=event_loop)
+async def user(user_user: m.User, event_loop: asyncio.AbstractEventLoop) -> master.Master:
+    _user = master.Master('http://localhost:3000', user_user.username, user_user.username, tls=False, loop=event_loop)
+    await _user.rest.login_async(user_user.username, user_user.username)
+    return _user
 
 
 @pytest.fixture
-def public_channel(admin: master.Master) -> m.Room:
-    return _get_or_create_public_room(admin, random_string(10))
+async def public_channel(admin: master.Master) -> m.Room:
+    return await _get_or_create_public_room(admin, random_string(10))
 
 
 @pytest.fixture
-def statusroom(admin: master.Master) -> m.Room:
-    return _get_or_create_public_room(admin, 'pollstatusroom')
+async def statusroom(admin: master.Master) -> m.Room:
+    return await _get_or_create_public_room(admin, 'pollstatusroom')
 
 
 @pytest.fixture
-def private_group(admin: master.Master) -> m.Room:
-    return _get_or_create_private_group(admin, random_string(10))
+async def private_group(admin: master.Master) -> m.Room:
+    return await _get_or_create_private_group(admin, random_string(10))
 
 
-def _get_or_create_user(
+async def _get_or_create_user(
         master: master.Master,
         username: str,
         displayname: str,
         *,
         roles: List[str] = ['user']) -> m.User:
 
-    result = master.rest.users_info(username=username).json()
+    result = (await master.rest.users_info_async(username=username)).json()
     if not result['success']:
-        result = master.rest.users_create(
+        result = (await master.rest.users_create_async(
             username=username,
             name=displayname,
             email=f'{username}@example.com',
             password=username,
             roles=roles
-        ).json()
+        )).json()
 
     return m.create(m.User, result['user'])
 
 
-def _get_or_create_public_room(master: master.Master, roomname: str) -> m.Room:
-    result = master.rest.channels_info(channel=roomname).json()
+async def _get_or_create_public_room(master: master.Master, roomname: str) -> m.Room:
+    result = (await master.rest.channels_info_async(channel=roomname)).json()
     if not result['success']:
-        result = master.rest.channels_create(name=roomname).json()
+        result = (await master.rest.channels_create(name=roomname)).json()
 
     return m.create(m.Room, result['channel'])
 
 
-def _get_or_create_private_group(master: master.Master, roomname: str) -> m.Room:
-    result = master.rest.groups_info(room_name=roomname).json()
+async def _get_or_create_private_group(master: master.Master, roomname: str) -> m.Room:
+    result = (await master.rest.groups_info_async(room_name=roomname)).json()
     if not result['success']:
-        result = master.rest.groups_create(name=roomname).json()
+        result = (await master.rest.groups_create_async(name=roomname)).json()
 
     return m.create(m.Room, result['group'])

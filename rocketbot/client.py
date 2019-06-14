@@ -6,6 +6,7 @@ import re
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 
 import aioify
+import requests
 from ddp_asyncio import DDPClient
 from ddp_asyncio.exceptions import RemoteMethodError
 from ddp_asyncio.subscription import Subscription
@@ -216,9 +217,51 @@ class DdpClient:
         return await self.subscribe_room('__my_messages__', callback)
 
 
+def _async_call_wrapper(func: Callable[..., requests.Response]) -> Callable[..., Awaitable[requests.Response]]:
+    async_func = aioify.aioify(func)
+    regex = re.compile(r'([0-9]+) seconds .*\[error-too-many-requests\]')
+
+    async def _async_func_wrapper(*args: Any, **kwargs: Any) -> requests.Response:
+        while True:
+            response = await async_func(*args, **kwargs)
+            if response.status_code != 429:
+                return response
+            msg = response.json().get('error')
+            result = regex.search(msg)
+            if result:
+                seconds = result.groups()[0]
+                await asyncio.sleep(int(seconds))
+            else:
+                raise exp.RocketClientException(msg)
+    return _async_func_wrapper
+
+
 class RestClient(RocketChat):  # type: ignore
-    login_async = aioify.aioify(RocketChat.login)
-    logout_async = aioify.aioify(RocketChat.logout)
+    def login(self, user: str, password: str) -> requests.Response:
+        '''Patch login function because it only returns the status_code on error'''
+        login_request = requests.post(self.server_url + self.API_path + 'login',
+                                      data={'username': user,
+                                            'password': password},
+                                      verify=self.ssl_verify,
+                                      proxies=self.proxies)
+        if login_request.status_code == 200:
+            if login_request.json().get('status') == "success":
+                self.headers['X-Auth-Token'] = login_request.json().get('data').get('authToken')
+                self.headers['X-User-Id'] = login_request.json().get('data').get('userId')
+        return login_request
+
+    # Define async variant of sync functions
+    login_async = _async_call_wrapper(login)
+    logout_async = _async_call_wrapper(RocketChat.logout)
+
+    channels_create_async = _async_call_wrapper(RocketChat.channels_create)
+    channels_info_async = _async_call_wrapper(RocketChat.channels_info)
+
+    groups_create_async = _async_call_wrapper(RocketChat.groups_create)
+    groups_info_async = _async_call_wrapper(RocketChat.groups_info)
+
+    users_create_async = _async_call_wrapper(RocketChat.users_create)
+    users_info_async = _async_call_wrapper(RocketChat.users_info)
 
 
 async def _exception_wrapper(event_name: str, callback: Awaitable[None]) -> None:
