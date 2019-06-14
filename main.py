@@ -33,6 +33,7 @@ async def main() -> None:
     loop = asyncio.get_event_loop()
 
     masterbot = master.Master(c.SERVER, c.BOTNAME, c.PASSWORD, loop=loop)
+    masterbot.rest.login(c.BOTNAME, c.PASSWORD)
 
     result = masterbot.rest.rooms_info(room_name=c.POLL_STATUS_ROOM).json()
     statusroom = m.create(m.Room, result['room'])
@@ -79,5 +80,5 @@ while True:
         logging.error("Failed to connect. Retry in 60s")
         time.sleep(60)
     except Exception as e:
-        logging.error(f"{type(e).__name__}: {e}")
+        logging.error(f"{type(e).__name__}: {e}", exc_info=True)
         sentry.exception()

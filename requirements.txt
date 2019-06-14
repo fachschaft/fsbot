@@ -1,4 +1,5 @@
 aiohttp>=3.5.4
+aioify>=0.3.1
 ddp_asyncio>=0.3.0
 dmsclient>=1.5.1
 petname>=2.2

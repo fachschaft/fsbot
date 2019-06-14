@@ -31,8 +31,7 @@ class Master:
             rest_url = f'http://{base_url}'
 
         self.ddp = client.DdpClient(ws_url, loop)
-        # TODO(Move to __aenter)
-        self.rest = client.RestClient(user=username, password=password, server_url=rest_url)
+        self.rest = client.RestClient(server_url=rest_url)
         self._username = username
         self._password = password
         self._roomid_cache: Dict[str, m.Room] = {}
@@ -48,9 +47,19 @@ class Master:
 
     async def __aenter__(self) -> 'Master':
         logging.debug(f"Called __aenter__ for user {self._username}")
-        await self.ddp.connect()
-        await self.ddp.login(self._username, self._password)
 
+        async def _login_ddp() -> None:
+            """Login ddp by calling connect and login sequential"""
+            await self.ddp.connect()
+            await self.ddp.login(self._username, self._password)
+
+        # Login rest and ddp in parallel
+        await asyncio.gather(
+            _login_ddp(),
+            self.rest.login_async(self._username, self._password)
+        )
+
+        # Enable bots when both clients are connected/ logged in
         await self.enable_bots()
 
         return self
@@ -126,10 +135,15 @@ class Master:
 
     async def shutdown(self) -> None:
         """Graceful shutdown master by logging out and disconnecting the clients"""
-        # TODO(parallelize logout)
-        await self.ddp.logout()
-        await self.ddp.disconnect()
-        self.rest.logout()
+        async def _shutdown_ddp() -> None:
+            """Shutdown ddp by calling logout and disconnect sequential"""
+            await self.ddp.logout()
+            await self.ddp.disconnect()
+
+        await asyncio.gather(
+            _shutdown_ddp(),
+            self.rest.logout_async()
+        )
 
     def add_task(self, task: asyncio.Task[Any]) -> None:
         '''Add a task to the master
