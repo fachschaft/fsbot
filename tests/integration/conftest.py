@@ -21,7 +21,8 @@ def setup_admin() -> None:
 
     global _admin_user
 
-    result = client.RestClient().users_register(
+    rest = client.RestClient()
+    result = rest._users_register(
         username='admin',
         name='Administrator',
         email='admin@example.com',
@@ -29,8 +30,8 @@ def setup_admin() -> None:
     if result['success']:
         _admin_user = m.create(m.User, result['user'])
     else:
-        restClient = client.RestClient(user='admin', password='admin')
-        result = restClient.users_info(username='admin').json()
+        rest._login(user='admin', password='admin')
+        result = rest._users_info(username='admin').json()
         _admin_user = m.create(m.User, result['user'])
 
 
@@ -63,7 +64,7 @@ async def admin(admin_user: m.User, event_loop: asyncio.AbstractEventLoop) -> ma
     _admin = master.Master(
         'http://localhost:3000', admin_user.username,
         admin_user.username, tls=False, loop=event_loop)
-    await _admin.rest.login_async(admin_user.username, admin_user.username)
+    await _admin.rest.login(admin_user.username, admin_user.username)
     return _admin
 
 
@@ -75,7 +76,7 @@ async def bot_user(admin: master.Master) -> m.User:
 @pytest.fixture
 async def bot(bot_user: m.User, event_loop: asyncio.AbstractEventLoop) -> master.Master:
     _bot = master.Master('http://localhost:3000', bot_user.username, bot_user.username, tls=False, loop=event_loop)
-    await _bot.rest.login_async(bot_user.username, bot_user.username)
+    await _bot.rest.login(bot_user.username, bot_user.username)
     return _bot
 
 
@@ -87,7 +88,7 @@ async def user_user(admin: master.Master) -> m.User:
 @pytest.fixture
 async def user(user_user: m.User, event_loop: asyncio.AbstractEventLoop) -> master.Master:
     _user = master.Master('http://localhost:3000', user_user.username, user_user.username, tls=False, loop=event_loop)
-    await _user.rest.login_async(user_user.username, user_user.username)
+    await _user.rest.login(user_user.username, user_user.username)
     return _user
 
 
@@ -113,9 +114,9 @@ async def _get_or_create_user(
         *,
         roles: List[str] = ['user']) -> m.User:
 
-    result = (await master.rest.users_info_async(username=username)).json()
+    result = (await master.rest.users_info(username=username)).json()
     if not result['success']:
-        result = (await master.rest.users_create_async(
+        result = (await master.rest.users_create(
             username=username,
             name=displayname,
             email=f'{username}@example.com',
@@ -127,7 +128,7 @@ async def _get_or_create_user(
 
 
 async def _get_or_create_public_room(master: master.Master, roomname: str) -> m.Room:
-    result = (await master.rest.channels_info_async(channel=roomname)).json()
+    result = (await master.rest.channels_info(channel=roomname)).json()
     if not result['success']:
         result = (await master.rest.channels_create(name=roomname)).json()
 
@@ -135,8 +136,8 @@ async def _get_or_create_public_room(master: master.Master, roomname: str) -> m.
 
 
 async def _get_or_create_private_group(master: master.Master, roomname: str) -> m.Room:
-    result = (await master.rest.groups_info_async(room_name=roomname)).json()
+    result = (await master.rest.groups_info(room_name=roomname)).json()
     if not result['success']:
-        result = (await master.rest.groups_create_async(name=roomname)).json()
+        result = (await master.rest.groups_create(name=roomname)).json()
 
     return m.create(m.Room, result['group'])

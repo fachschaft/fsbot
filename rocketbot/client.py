@@ -218,6 +218,9 @@ class DdpClient:
 
 
 def _async_call_wrapper(func: Callable[..., requests.Response]) -> Callable[..., Awaitable[requests.Response]]:
+    '''Takes a sync rest call function and wraps it. The returned function is awaitable and has
+    a rate limiter protection/ prevention
+    '''
     async_func = aioify.aioify(func)
     regex = re.compile(r'([0-9]+) seconds .*\[error-too-many-requests\]')
 
@@ -237,7 +240,7 @@ def _async_call_wrapper(func: Callable[..., requests.Response]) -> Callable[...,
 
 
 class RestClient(RocketChat):  # type: ignore
-    def login(self, user: str, password: str) -> requests.Response:
+    def _login_patch(self, user: str, password: str) -> requests.Response:
         '''Patch login function because it only returns the status_code on error'''
         login_request = requests.post(self.server_url + self.API_path + 'login',
                                       data={'username': user,
@@ -250,18 +253,30 @@ class RestClient(RocketChat):  # type: ignore
                 self.headers['X-User-Id'] = login_request.json().get('data').get('userId')
         return login_request
 
-    # Define async variant of sync functions
-    login_async = _async_call_wrapper(login)
-    logout_async = _async_call_wrapper(RocketChat.logout)
+    # Overwrite sync functions with async ones
+    login = _async_call_wrapper(_login_patch)
+    logout = _async_call_wrapper(RocketChat.logout)
 
-    channels_create_async = _async_call_wrapper(RocketChat.channels_create)
-    channels_info_async = _async_call_wrapper(RocketChat.channels_info)
+    channels_create = _async_call_wrapper(RocketChat.channels_create)
+    channels_info = _async_call_wrapper(RocketChat.channels_info)
+    channels_invite = _async_call_wrapper(RocketChat.channels_invite)
 
-    groups_create_async = _async_call_wrapper(RocketChat.groups_create)
-    groups_info_async = _async_call_wrapper(RocketChat.groups_info)
+    groups_create = _async_call_wrapper(RocketChat.groups_create)
+    groups_info = _async_call_wrapper(RocketChat.groups_info)
+    groups_invite = _async_call_wrapper(RocketChat.groups_invite)
 
-    users_create_async = _async_call_wrapper(RocketChat.users_create)
-    users_info_async = _async_call_wrapper(RocketChat.users_info)
+    users_create = _async_call_wrapper(RocketChat.users_create)
+    users_info = _async_call_wrapper(RocketChat.users_info)
+
+    rooms_info = _async_call_wrapper(RocketChat.rooms_info)
+
+    # Sync calls for backward compatibility:
+    # TODO(Remove)
+    _login = RocketChat.login
+    _rooms_info = RocketChat.rooms_info
+    _channels_history = RocketChat.channels_history
+    _users_info = RocketChat.users_info
+    _users_register = RocketChat.users_register
 
 
 async def _exception_wrapper(event_name: str, callback: Awaitable[None]) -> None:

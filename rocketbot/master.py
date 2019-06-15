@@ -56,7 +56,7 @@ class Master:
         # Login rest and ddp in parallel
         await asyncio.gather(
             _login_ddp(),
-            self.rest.login_async(self._username, self._password)
+            self.rest.login(self._username, self._password)
         )
 
         # Enable bots when both clients are connected/ logged in
@@ -72,7 +72,7 @@ class Master:
         if room_id is not None:
             if room_id not in self._roomid_cache:
                 try:
-                    result = self.rest.rooms_info(room_id=room_id).json()
+                    result = (await self.rest.rooms_info(room_id=room_id)).json()
                     if 'room' in result:
                         room = m.create(m.Room, result['room'])
                         self._roomid_cache[room_id] = room
@@ -87,7 +87,7 @@ class Master:
         if room_name is not None:
             if room_name not in self._roomname_cache:
                 try:
-                    result = self.rest.rooms_info(room_name=room_name).json()
+                    result = (await self.rest.rooms_info(room_name=room_name)).json()
                     if 'room' in result:
                         room = m.create(m.Room, result['room'])
                         self._roomid_cache[room._id] = room
@@ -103,7 +103,7 @@ class Master:
     async def user(self, username: str) -> m.UserRef:
         if username not in self._users_cache:
             try:
-                user = self.rest.users_info(username=username).json()['user']
+                user = (await self.rest.users_info(username=username)).json()['user']
                 self._users_cache[username] = m.UserRef(_id=user['_id'], username=username, name=user['name'])
             except Exception:
                 # Retry next time
@@ -142,7 +142,7 @@ class Master:
 
         await asyncio.gather(
             _shutdown_ddp(),
-            self.rest.logout_async()
+            self.rest.logout()
         )
 
     def add_task(self, task: asyncio.Task[Any]) -> None:

@@ -123,7 +123,7 @@ class PollManager:
 
         # Load history of polls
         roomids = set()
-        history = self.master.rest.channels_history(statusroom._id, count=100).json()
+        history = self.master.rest._channels_history(statusroom._id, count=100).json()
         if 'messages' not in history:
             return
         for msg in history['messages'][::-1]:
@@ -135,7 +135,7 @@ class PollManager:
             except json.decoder.JSONDecodeError:
                 pass
         for rid in roomids:
-            room = self.master.rest.rooms_info(room_id=rid).json()
+            room = self.master.rest._rooms_info(room_id=rid).json()
             if room['success'] and 'name' in room['room']:
                 self.roomBot.rooms.add(room['room']['name'])
 

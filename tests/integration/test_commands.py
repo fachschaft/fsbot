@@ -42,8 +42,8 @@ async def test_poll_push_to_public(
         event_loop: asyncio.AbstractEventLoop, pollbot: master.Master,
         user: master.Master, public_channel: m.Room, admin: master.Master) -> None:
 
-    admin.rest.channels_invite(public_channel._id, pollbot.rest.headers['X-User-Id'])
-    admin.rest.channels_invite(public_channel._id, user.rest.headers['X-User-Id'])
+    await admin.rest.channels_invite(public_channel._id, pollbot.rest.headers['X-User-Id'])
+    await admin.rest.channels_invite(public_channel._id, user.rest.headers['X-User-Id'])
 
     # Register a bot waiting for the poll which resolves a future
     event = asyncio.Event()
@@ -64,8 +64,8 @@ async def test_poll_push_to_private(
         event_loop: asyncio.AbstractEventLoop, pollbot: master.Master,
         user: master.Master, private_group: m.Room, admin: master.Master) -> None:
 
-    admin.rest.groups_invite(private_group._id, pollbot.rest.headers['X-User-Id'])
-    admin.rest.groups_invite(private_group._id, user.rest.headers['X-User-Id'])
+    await admin.rest.groups_invite(private_group._id, pollbot.rest.headers['X-User-Id'])
+    await admin.rest.groups_invite(private_group._id, user.rest.headers['X-User-Id'])
     # Register a bot waiting for the poll which resolves a future
     event = asyncio.Event()
     user.bots.append(bots.RoomCustomBot(
