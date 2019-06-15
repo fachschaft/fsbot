@@ -38,7 +38,7 @@ def expect_message(event: asyncio.Event) -> Callable[[m.Message], Awaitable[None
 
 
 @pytest.mark.asyncio
-async def test_poll_push_to_public(
+async def test_push_to_public(
         event_loop: asyncio.AbstractEventLoop, pollbot: master.Master,
         user: master.Master, public_channel: m.Room, admin: master.Master) -> None:
 
@@ -60,7 +60,7 @@ async def test_poll_push_to_public(
 
 
 @pytest.mark.asyncio
-async def test_poll_push_to_private(
+async def test_push_to_private(
         event_loop: asyncio.AbstractEventLoop, pollbot: master.Master,
         user: master.Master, private_group: m.Room, admin: master.Master) -> None:
 
