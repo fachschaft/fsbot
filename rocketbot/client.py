@@ -262,6 +262,7 @@ class RestClient(RocketChat):  # type: ignore
     channels_create = _async_call_wrapper(RocketChat.channels_create)
     channels_info = _async_call_wrapper(RocketChat.channels_info)
     channels_invite = _async_call_wrapper(RocketChat.channels_invite)
+    channels_history = _async_call_wrapper(RocketChat.channels_history)
 
     groups_create = _async_call_wrapper(RocketChat.groups_create)
     groups_info = _async_call_wrapper(RocketChat.groups_info)
