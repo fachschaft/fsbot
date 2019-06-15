@@ -270,14 +270,6 @@ class RestClient(RocketChat):  # type: ignore
 
     rooms_info = _async_call_wrapper(RocketChat.rooms_info)
 
-    # Sync calls for backward compatibility:
-    # TODO(Remove)
-    _login = RocketChat.login
-    _rooms_info = RocketChat.rooms_info
-    _channels_history = RocketChat.channels_history
-    _users_info = RocketChat.users_info
-    _users_register = RocketChat.users_register
-
 
 async def _exception_wrapper(event_name: str, callback: Awaitable[None]) -> None:
     """Wrapper for coroutines to catch and log exceptions"""

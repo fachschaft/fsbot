@@ -121,23 +121,30 @@ class PollManager:
         statusbot = bots.RoomCustomBot(master=master, whitelist=[statusroom.name], callback=self._status_callback)
         self.master.bots.append(statusbot)
 
+    @staticmethod
+    async def create_pollmanager(master: Master, botname: str, statusroom: m.RoomRef) -> PollManager:
+        ''' Factory function creating a pollmanager and initializing old polls
+        '''
+        pollmanager = PollManager(master, botname, statusroom)
+
         # Load history of polls
         roomids = set()
-        history = self.master.rest._channels_history(statusroom._id, count=100).json()
+        history = (await master.rest.channels_history(statusroom._id, count=100)).json()
         if 'messages' not in history:
-            return
+            return pollmanager
         for msg in history['messages'][::-1]:
             try:
                 poll = _deserialize_poll(msg['msg'])
                 poll.status_msg_id = msg['_id']
-                self.polls.add(poll)
+                pollmanager.polls.add(poll)
                 roomids.add(poll.roomid)
             except json.decoder.JSONDecodeError:
                 pass
         for rid in roomids:
-            room = self.master.rest._rooms_info(room_id=rid).json()
+            room = (await master.rest.rooms_info(room_id=rid)).json()
             if room['success'] and 'name' in room['room']:
-                self.roomBot.rooms.add(room['room']['name'])
+                pollmanager.roomBot.rooms.add(room['room']['name'])
+        return pollmanager
 
     async def create(self, roomid: str, msg_id: str, title: str, options: List[str]) -> None:
         id = self.polls.new_id()

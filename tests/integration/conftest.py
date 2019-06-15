@@ -2,8 +2,8 @@ import asyncio
 from typing import Iterable, List
 
 import pytest
+from rocketchat_API.rocketchat import RocketChat
 
-import rocketbot.client as client
 import rocketbot.master as master
 import rocketbot.models as m
 
@@ -21,8 +21,10 @@ def setup_admin() -> None:
 
     global _admin_user
 
-    rest = client.RestClient()
-    result = rest._users_register(
+    # This function uses the default RocketChat Client because it cannot be async and
+    # since this is the first function it cannot break due to the ratelimiter
+    rest = RocketChat()
+    result = rest.users_register(
         username='admin',
         name='Administrator',
         email='admin@example.com',
@@ -30,8 +32,8 @@ def setup_admin() -> None:
     if result['success']:
         _admin_user = m.create(m.User, result['user'])
     else:
-        rest._login(user='admin', password='admin')
-        result = rest._users_info(username='admin').json()
+        rest.login(user='admin', password='admin')
+        result = rest.users_info(username='admin').json()
         _admin_user = m.create(m.User, result['user'])
 
 

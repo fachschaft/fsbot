@@ -37,7 +37,8 @@ async def main() -> None:
 
     result = (await masterbot.rest.rooms_info(room_name=c.POLL_STATUS_ROOM)).json()
     statusroom = m.create(m.Room, result['room'])
-    pollmanager = pollutil.PollManager(master=masterbot, botname=c.BOTNAME, statusroom=statusroom.to_roomref())
+    pollmanager = await pollutil.PollManager.create_pollmanager(
+        master=masterbot, botname=c.BOTNAME, statusroom=statusroom.to_roomref())
 
     usage = com.Usage(master=masterbot)
     ping = com.Ping(master=masterbot)
