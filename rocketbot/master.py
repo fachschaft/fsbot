@@ -158,3 +158,4 @@ class Master:
     async def finish_all_tasks(self) -> None:
         while any(x for x in self._active_callbacks if not x.done()):
             await asyncio.wait(self._active_callbacks)
+        await asyncio.sleep(.5)

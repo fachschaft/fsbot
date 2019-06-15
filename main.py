@@ -46,6 +46,7 @@ async def main() -> None:
     dms = com.Dms(master=masterbot, token=c.DMS_TOKEN)
     etm = com.Etm(master=masterbot, pollmanager=pollmanager)
     food = com.Food(master=masterbot)
+    birthday = com.Birthday(master=masterbot)
     notify = com.CatchAll(master=masterbot, callback=com.private_message_user)
 
     # Public command bot
@@ -59,7 +60,7 @@ async def main() -> None:
         bots.RoomTypeCommandBot(
             master=masterbot, username=c.BOTNAME,
             enable_direct_message=True,
-            commands=[usage, ping, dms, food, poll]))
+            commands=[usage, ping, dms, food, poll, birthday]))
     # Mensa bot
     masterbot.bots.append(
         bots.RoomCommandBot(

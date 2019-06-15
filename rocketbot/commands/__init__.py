@@ -1,4 +1,5 @@
 from rocketbot.commands.base import BaseCommand  # noqa: F401
+from rocketbot.commands.birthday import Birthday  # noqa: F401
 from rocketbot.commands.catchall import (  # noqa: F401
     CatchAll, private_message_user
 )

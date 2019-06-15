@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import functools
 import logging
 import re
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
@@ -224,6 +225,7 @@ def _async_call_wrapper(func: Callable[..., requests.Response]) -> Callable[...,
     async_func = aioify.aioify(func)
     regex = re.compile(r'([0-9]+) seconds .*\[error-too-many-requests\]')
 
+    @functools.wraps(func)
     async def _async_func_wrapper(*args: Any, **kwargs: Any) -> requests.Response:
         while True:
             response = await async_func(*args, **kwargs)
@@ -264,9 +266,13 @@ class RestClient(RocketChat):  # type: ignore
     groups_create = _async_call_wrapper(RocketChat.groups_create)
     groups_info = _async_call_wrapper(RocketChat.groups_info)
     groups_invite = _async_call_wrapper(RocketChat.groups_invite)
+    groups_list = _async_call_wrapper(RocketChat.groups_list)
+    groups_add_owner = _async_call_wrapper(RocketChat.groups_add_owner)
+    groups_delete = _async_call_wrapper(RocketChat.groups_delete)
 
     users_create = _async_call_wrapper(RocketChat.users_create)
     users_info = _async_call_wrapper(RocketChat.users_info)
+    users_list = _async_call_wrapper(RocketChat.users_list)
 
     rooms_info = _async_call_wrapper(RocketChat.rooms_info)
 
