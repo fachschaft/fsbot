@@ -224,6 +224,10 @@ class User:
     settings: Optional[Dict[str, Any]] = None
     statusConnection: Optional[str] = None
     utcOffset: Optional[int] = None
+    statusDefault: Optional[str] = None
+    avatarOrigin: Optional[str] = None
+    language: Optional[str] = None
+    requirePasswordChange: Optional[bool] = None
 
     def __post_init__(self) -> None:
         self.createdAt = m.try_create(m.RcDatetime, self.createdAt)
