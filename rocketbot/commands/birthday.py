@@ -1,3 +1,4 @@
+import re
 from typing import List, Tuple
 
 import rocketbot.commands as c
@@ -32,7 +33,7 @@ class Birthday(c.BaseCommand):
             users = [m.create(m.User, u) for u in result.json()['users']]
 
             username = user.name if user.name is not None else user.username
-            username = username.replace(r'\s', '_').lower()
+            username = re.sub(r'\s', '_', username).lower()
             name = f'geburtstag_{username}'
             members = [u.username for u in users if u.username != user.username]
             result = await self.master.rest.groups_create(name=name, members=members)
