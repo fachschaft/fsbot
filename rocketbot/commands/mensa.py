@@ -101,6 +101,7 @@ class Etm(c.BaseCommand):
             if poll and poll.title == 'ETM' and poll.created_on.is_today():
                 # If its the same day, add the options to the poll
                 if any([await poll.add_option(self._normalizeOption(option_txt)) for option_txt in poll_options]):
+                    poll.options.sort(key=lambda x: x.text)
                     await poll.resend_old_message(self.master)
             else:
                 if len(poll_options) == 0:
