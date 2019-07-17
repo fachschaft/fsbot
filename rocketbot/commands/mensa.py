@@ -1,4 +1,5 @@
 import datetime
+import re
 from typing import Any, List, Optional, Tuple
 
 import rocketbot.commands as c
@@ -99,7 +100,7 @@ class Etm(c.BaseCommand):
 
             if poll and poll.title == 'ETM' and poll.created_on.is_today():
                 # If its the same day, add the options to the poll
-                if any([await poll.add_option(option_txt) for option_txt in poll_options]):
+                if any([await poll.add_option(self._normalizeOption(option_txt)) for option_txt in poll_options]):
                     await poll.resend_old_message(self.master)
             else:
                 if len(poll_options) == 0:
@@ -108,3 +109,17 @@ class Etm(c.BaseCommand):
                 if msg is not None:
                     await self.master.ddp.send_message(message.roomid, msg)
                 await self.pollmanager.create(message.roomid, message.id, 'ETM', poll_options)
+
+    two_digits = re.compile(r'^[^0-9]*([0-9])[^0-9]*([0-9])[^0-9]*$')
+    four_digits = re.compile(r'^[^0-9]*([0-9])[^0-9]*([0-9])[^0-9]*([0-9])[^0-9]*([0-9])[^0-9]*$')
+
+    def _normalizeOption(self, option: str) -> str:
+        res = Etm.two_digits.match(option)
+        if res:
+            a, b = res.groups()
+            return f'{a}{b}:00'
+        res = Etm.four_digits.match(option)
+        if res:
+            a, b, c, d = res.groups()
+            return f'{a}{b}:{c}{d}'
+        return option
