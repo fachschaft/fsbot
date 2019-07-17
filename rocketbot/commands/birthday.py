@@ -29,7 +29,7 @@ class Birthday(c.BaseCommand):
                 await self.master.ddp.send_message(message.roomid, "Please mention someone other than yourself")
                 return
 
-            result = await self.master.rest.users_list()
+            result = await self.master.rest.users_list(count=0)
             users = [m.create(m.User, u) for u in result.json()['users']]
 
             username = user.name if user.name is not None else user.username
