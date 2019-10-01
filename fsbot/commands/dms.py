@@ -4,7 +4,6 @@ import re
 from typing import Any, List, Tuple
 
 import dmsclient as dms
-
 import rocketbot.commands as c
 import rocketbot.models as m
 

@@ -4,8 +4,9 @@ from typing import Any, List, Optional, Tuple
 
 import rocketbot.commands as c
 import rocketbot.models as m
-import rocketbot.utils.meals as meals
 import rocketbot.utils.poll as pollutil
+
+import fsbot.utils.meals as meals
 
 
 async def _food_msg_by_day(day: int) -> str:

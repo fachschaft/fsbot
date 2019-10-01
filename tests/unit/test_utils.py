@@ -3,7 +3,7 @@ from typing import Any, Callable, List
 import pytest
 from asynctest import CoroutineMock, MagicMock, patch
 
-import rocketbot.utils.meals as meals
+import fsbot.utils.meals as meals
 
 from ..utils import patch_module
 

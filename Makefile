@@ -1,4 +1,4 @@
-FILES=*.py rocketbot tests
+FILES=*.py fsbot tests
 
 all: mypy lint sort_import
 
@@ -21,7 +21,7 @@ itest: _pre_test
 	pytest tests/integration
 
 test_cov: _pre_test
-	pytest tests --cov=rocketbot
+	pytest tests --cov=fsbot
 	codecov
 
 mypy:

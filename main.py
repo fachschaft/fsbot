@@ -23,6 +23,8 @@ import rocketbot.models as m  # noqa: E402
 import rocketbot.utils.poll as pollutil  # noqa: E402
 import rocketbot.utils.sentry as sentry  # noqa: E402
 
+import fsbot.commands as com2  # noqa: E402
+
 try:
     import bot_config as c
 except ModuleNotFoundError:
@@ -43,11 +45,12 @@ async def main() -> None:
     usage = com.Usage(master=masterbot)
     ping = com.Ping(master=masterbot)
     poll = com.Poll(master=masterbot, pollmanager=pollmanager)
-    dms = com.Dms(master=masterbot, token=c.DMS_TOKEN)
-    etm = com.Etm(master=masterbot, pollmanager=pollmanager)
-    food = com.Food(master=masterbot)
-    birthday = com.Birthday(master=masterbot)
     notify = com.CatchAll(master=masterbot, callback=com.private_message_user)
+
+    dms = com2.Dms(master=masterbot, token=c.DMS_TOKEN)
+    etm = com2.Etm(master=masterbot, pollmanager=pollmanager)
+    food = com2.Food(master=masterbot)
+    birthday = com2.Birthday(master=masterbot)
 
     # Public command bot
     masterbot.bots.append(

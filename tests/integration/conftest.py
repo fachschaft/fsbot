@@ -2,10 +2,9 @@ import asyncio
 from typing import Iterable, List
 
 import pytest
-from rocketchat_API.rocketchat import RocketChat
-
 import rocketbot.master as master
 import rocketbot.models as m
+from rocketchat_API.rocketchat import RocketChat
 
 from ..utils import random_string
 

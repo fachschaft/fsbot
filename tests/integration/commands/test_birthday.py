@@ -1,11 +1,11 @@
 from typing import AsyncIterator
 
 import pytest
-
 import rocketbot.bots as bots
-import rocketbot.commands as com
 import rocketbot.master as master
 import rocketbot.models as m
+
+import fsbot.commands as com
 
 
 @pytest.yield_fixture
