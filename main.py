@@ -2,6 +2,7 @@ import asyncio
 import logging
 import time
 import requests
+from json import JSONDecodeError
 
 # Configure logging before importing because some submodule tries to configures the logger
 console = logging.StreamHandler()
@@ -81,7 +82,7 @@ while True:
         asyncio.run(main())
         # If run terminates without exception end the while true loop
         break
-    except (RocketConnectionException, requests.exceptions.SSLError):
+    except (RocketConnectionException, requests.exceptions.SSLError, JSONDecodeError):
         logging.error("Failed to connect. Retry in 60s")
         time.sleep(60)
     except Exception as e:
