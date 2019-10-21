@@ -92,36 +92,48 @@ class Etm(c.BaseCommand):
         """
         return command in ['etm', 'etlm']
 
+    quotemarks = re.compile(r'("|„|“|\'|„|“|”|‘|’)')
+
     async def handle(self, command: str, args: str, message: m.Message) -> None:
         """Handle the incoming message
         """
         if command in ['etm', 'etlm']:
             poll = self.pollmanager.polls.get(roomid=message.roomid)
-            poll_options = pollutil.parse_args(args)
 
+            poll_options = [args]
+            # Parse only if a pair of " is found
+            if len(Etm.quotemarks.findall(args)) > 1:
+                poll_options = pollutil.parse_args(args)
             if poll and poll.title == 'ETM' and poll.created_on.is_today():
                 # If its the same day, add the options to the poll
-                if any([await poll.add_option(self._normalizeOption(option_txt)) for option_txt in poll_options]):
+                if any([await poll.add_option(
+                        self._normalizeOption(option_txt))
+                        for option_txt in poll_options
+                        if option_txt.strip() != '']):
                     poll.options.sort(key=lambda x: x.text)
                     await poll.resend_old_message(self.master)
             else:
-                if len(poll_options) == 0:
-                    poll_options.append('11:30')
+                if len(poll_options) == 1 and poll_options[0].strip() == '':
+                    poll_options = ['11:30']
                 msg = await _food_command("")
                 if msg is not None:
                     await self.master.ddp.send_message(message.roomid, msg)
                 await self.pollmanager.create(message.roomid, message.id, 'ETM', poll_options)
 
-    two_digits = re.compile(r'^[^0-9]*([0-9])[^0-9]*([0-9])[^0-9]*$')
-    four_digits = re.compile(r'^[^0-9]*([0-9])[^0-9]*([0-9])[^0-9]*([0-9])[^0-9]*([0-9])[^0-9]*$')
+    pattern = re.compile(r'^[\s]*(1[1-4])[.:]?([0-5][0-9])?[\s]*$')
 
     def _normalizeOption(self, option: str) -> str:
-        res = Etm.two_digits.match(option)
+        """Observed cases:
+
+        12:30 -> 12:30
+        1230  -> 12:30
+        12    -> 12:00
+        12.30 -> 12:30
+        """
+        res = Etm.pattern.match(option)
         if res:
             a, b = res.groups()
-            return f'{a}{b}:00'
-        res = Etm.four_digits.match(option)
-        if res:
-            a, b, c, d = res.groups()
-            return f'{a}{b}:{c}{d}'
+            if b is None:
+                b = '00'
+            return f'{a}:{b}'
         return option
