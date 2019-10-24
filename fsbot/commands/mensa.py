@@ -106,10 +106,14 @@ class Etm(c.BaseCommand):
                 poll_options = pollutil.parse_args(args)
             if poll and poll.title == 'ETM' and poll.created_on.is_today():
                 # If its the same day, add the options to the poll
-                if any([await poll.add_option(
-                        self._normalizeOption(option_txt))
-                        for option_txt in poll_options
-                        if option_txt.strip() != '']):
+                new_options = [
+                    await poll.add_option(self._normalizeOption(option_txt))
+                    for option_txt in poll_options
+                    if option_txt.strip() != '']
+                if any(new_options):
+                    # Preset sender of message for each option (s)he added
+                    for opt in (x for x in new_options if x is not None):
+                        opt.users.add(message.created_by.username)
                     poll.options.sort(key=lambda x: x.text)
                     await poll.resend_old_message(self.master)
             else:
