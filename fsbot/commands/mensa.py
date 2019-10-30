@@ -1,12 +1,17 @@
 import datetime
+import logging
 import re
-from typing import Any, List, Optional, Tuple
+from typing import Any, Awaitable, Callable, Coroutine, List, Optional, Tuple
 
 import rocketbot.commands as c
 import rocketbot.models as m
 import rocketbot.utils.poll as pollutil
+import rocketbot.utils.sentry as sentry
+from ftfbroker.producer.rocketchat_mensa import RocketchatMensaProducer
 
 import fsbot.utils.meals as meals
+
+logger = logging.getLogger(__name__)
 
 
 async def _food_msg_by_day(day: int) -> str:
@@ -122,7 +127,9 @@ class Etm(c.BaseCommand):
                 msg = await _food_command("")
                 if msg is not None:
                     await self.master.ddp.send_message(message.roomid, msg)
-                await self.pollmanager.create(message.roomid, message.id, 'ETM', poll_options)
+                poll = await self.pollmanager.create(message.roomid, message.id, 'ETM', poll_options)
+                # Ignore due to mypy bug: https://github.com/python/mypy/issues/2427
+                poll.resend_old_message = monkeypatch_kafka(poll, poll.resend_old_message)  # type: ignore
 
     pattern = re.compile(r'^[\s]*(1[1-4])[.:]?([0-5][0-9])?[\s]*$')
 
@@ -141,3 +148,32 @@ class Etm(c.BaseCommand):
                 b = '00'
             return f'{a}:{b}'
         return option
+
+
+def monkeypatch_kafka(
+    poll: pollutil.Poll,
+    trigger: Callable[..., Awaitable[None]]
+) -> Callable[..., Coroutine[Any, Any, None]]:
+
+    # Poll was created -> send first message
+    send_kafka_message(poll.options, poll.botname)
+
+    async def wrapper(*args: Any, **kwargs: Any) -> None:
+        # Call patched function first
+        await trigger(*args, **kwargs)
+        # Send kafka message on each trigger function call
+        send_kafka_message(poll.options, poll.botname)
+
+    return wrapper
+
+
+def send_kafka_message(options: List[pollutil.PollOption], botname: str) -> None:
+    try:
+        kafkaproducer = RocketchatMensaProducer()
+
+        opts = [(o.text, [u for u in o.users if u != botname]) for o in options]
+        kafkaproducer.sendV1(opts)
+        kafkaproducer.close()
+    except Exception as e:
+        logger.error(f"{type(e).__name__}: {e}", exc_info=True)
+        sentry.exception()

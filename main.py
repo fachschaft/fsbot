@@ -12,7 +12,7 @@ root.handlers.clear()
 root.addHandler(console)
 
 # Configure logglevels
-logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.WARNING)
 logging.getLogger("rocketbot").setLevel(logging.INFO)
 
 from rocketchat_API.APIExceptions.RocketExceptions import RocketConnectionException  # noqa: E402

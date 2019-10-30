@@ -4,6 +4,7 @@ ddp_asyncio>=0.3.0
 dmsclient>=1.5.1
 petname>=2.2
 raven>=6.10.0
-rocketbot==0.2.4
+rocketbot==0.2.5
 rocketchat_API>=0.6.31
 tzlocal>=1.5.1
+ftfbroker==0.0.3
