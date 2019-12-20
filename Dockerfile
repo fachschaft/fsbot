@@ -1,5 +1,11 @@
 FROM python:3.7-alpine
 
+RUN apk add --update\
+    gcc \
+    musl-dev \
+  && apk upgrade\
+  && rm /var/cache/apk/*
+
 COPY ./requirements.txt /requirements.txt
 RUN pip install -r requirements.txt
 
