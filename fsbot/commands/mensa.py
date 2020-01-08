@@ -124,12 +124,15 @@ class Etm(c.BaseCommand):
             else:
                 if len(poll_options) == 1 and poll_options[0].strip() == '':
                     poll_options = ['11:30']
+                else:
+                    poll_options = [self._normalizeOption(o) for o in poll_options]
                 msg = await _food_command("")
                 if msg is not None:
                     await self.master.ddp.send_message(message.roomid, msg)
                 poll = await self.pollmanager.create(message.roomid, message.id, 'ETM', poll_options)
                 # Ignore due to mypy bug: https://github.com/python/mypy/issues/2427
-                poll.resend_old_message = monkeypatch_kafka(poll, poll.resend_old_message)  # type: ignore
+                # poll.resend_old_message = monkeypatch_kafka(poll, poll.resend_old_message)  # type: ignore
+                setattr(poll, "resend_old_message", monkeypatch_kafka(poll, poll.resend_old_message))
 
     pattern = re.compile(r'^[\s]*(1[1-4])[.:]?([0-5][0-9])?[\s]*$')
 
