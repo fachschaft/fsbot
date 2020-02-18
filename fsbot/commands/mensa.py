@@ -13,6 +13,11 @@ import fsbot.utils.meals as meals
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_TIME = {
+    'etm': '11:30',
+    'etlm': '12:30',
+}
+
 
 async def _food_msg_by_day(day: int) -> str:
     """Return the food msg by day where monday=0, ..."""
@@ -123,7 +128,7 @@ class Etm(c.BaseCommand):
                     await poll.resend_old_message(self.master)
             else:
                 if len(poll_options) == 1 and poll_options[0].strip() == '':
-                    poll_options = ['11:30']
+                    poll_options = [DEFAULT_TIME[command]]
                 else:
                     poll_options = [self._normalizeOption(o) for o in poll_options]
                 msg = await _food_command("")
