@@ -197,7 +197,6 @@ async def test_should_split_poll_options_for_existing_poll() -> None:
     assert expected == actual
 
 
-@pytest.mark.skip
 @pytest.mark.asyncio
 async def test_should_add_default_time_for_etm() -> None:
     # Arrange
@@ -214,7 +213,6 @@ async def test_should_add_default_time_for_etm() -> None:
     assert expected == actual
 
 
-@pytest.mark.skip
 @pytest.mark.asyncio
 async def test_should_add_default_time_for_etlm() -> None:
     # Arrange

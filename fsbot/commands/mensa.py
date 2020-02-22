@@ -114,23 +114,27 @@ class Etm(c.BaseCommand):
             # Parse only if a pair of " is found
             if len(Etm.quotemarks.findall(args)) > 1:
                 poll_options = pollutil.parse_args(args)
+
+            # Normalze poll options or set defaults
+            if len(poll_options) == 1 and poll_options[0].strip() == '':
+                poll_options = [DEFAULT_TIME[command]]
+            else:
+                poll_options = [self._normalizeOption(o) for o in poll_options]
+
             if poll and poll.title == 'ETM' and poll.created_on.is_today():
                 # If its the same day, add the options to the poll
                 new_options = [
-                    await poll.add_option(self._normalizeOption(option_txt))
+                    await poll.add_option(option_txt)
                     for option_txt in poll_options
                     if option_txt.strip() != '']
                 if any(new_options):
                     # Preset sender of message for each option (s)he added
-                    for opt in (x for x in new_options if x is not None):
-                        opt.users.add(message.created_by.username)
+                    for opt in new_options:
+                        if opt is not None:
+                            opt.users.add(message.created_by.username)
                     poll.options.sort(key=lambda x: x.text)
                     await poll.resend_old_message(self.master)
             else:
-                if len(poll_options) == 1 and poll_options[0].strip() == '':
-                    poll_options = [DEFAULT_TIME[command]]
-                else:
-                    poll_options = [self._normalizeOption(o) for o in poll_options]
                 msg = await _food_command("")
                 if msg is not None:
                     await self.master.ddp.send_message(message.roomid, msg)
