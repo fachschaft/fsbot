@@ -5,7 +5,7 @@ from asynctest import CoroutineMock, MagicMock, patch
 
 import fsbot.utils.meals as meals
 
-from ..utils import patch_module
+from tests.utils import patch_module
 
 MEAL_DATA = [
     ("day 1", [{"meals": ["Kichererbsenpolenta"]}, {"meals": ["Schweinesteak"]}]),
@@ -17,7 +17,7 @@ MEAL_DATA = [
 def setup_module() -> None:
     mock_bot_config = MagicMock()
     mock_bot_config.MENSA_CACHE_URL = 'https://www.mensa_dummy.de/api'
-    patch_module(meals, 'bot_config', mock_bot_config)
+    patch_module(meals, {'bot_config': mock_bot_config})
 
 
 def mock_get_meals(data: List[Any]) -> Callable[[str], MagicMock]:

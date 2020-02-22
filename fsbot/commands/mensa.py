@@ -141,7 +141,8 @@ class Etm(c.BaseCommand):
 
     pattern = re.compile(r'^[\s]*(1[1-4])[.:]?([0-5][0-9])?[\s]*$')
 
-    def _normalizeOption(self, option: str) -> str:
+    @classmethod
+    def _normalizeOption(cls, option: str) -> str:
         """Observed cases:
 
         12:30 -> 12:30
@@ -149,7 +150,7 @@ class Etm(c.BaseCommand):
         12    -> 12:00
         12.30 -> 12:30
         """
-        res = Etm.pattern.match(option)
+        res = cls.pattern.match(option)
         if res:
             a, b = res.groups()
             if b is None:
