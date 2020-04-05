@@ -32,7 +32,7 @@ except ModuleNotFoundError:
     raise Exception('Please provide the login credentials in a bot_config.py') from None
 
 
-async def main() -> None:
+async def setup_bot() -> master.Master:
     loop = asyncio.get_event_loop()
 
     masterbot = master.Master(c.SERVER, c.BOTNAME, c.PASSWORD, loop=loop)
@@ -72,19 +72,26 @@ async def main() -> None:
             whitelist=[c.MENSA_ROOM], commands=[etm],
             show_usage_on_unknown=False
         ))
+    return masterbot
 
-    async with masterbot:
-        logging.info(f'{c.BOTNAME} is ready')
-        await masterbot.ddp.disconnection()
 
-while True:
-    try:
-        asyncio.run(main())
-        # If run terminates without exception end the while true loop
-        break
-    except (RocketConnectionException, requests.exceptions.SSLError, JSONDecodeError):
-        logging.error("Failed to connect. Retry in 60s")
-        time.sleep(60)
-    except Exception as e:
-        logging.error(f"{type(e).__name__}: {e}", exc_info=True)
-        sentry.exception()
+async def main() -> None:
+    masterbot = await setup_bot()
+
+    while True:
+        try:
+            async with masterbot:
+                logging.info(f'{c.BOTNAME} is ready')
+                await masterbot.ddp.disconnection()
+            # If run terminates without exception end the while true loop
+            break
+        except (RocketConnectionException, requests.exceptions.SSLError, JSONDecodeError):
+            logging.error("Failed to connect. Retry in 60s")
+            time.sleep(60)
+        except Exception as e:
+            logging.error(f"{type(e).__name__}: {e}", exc_info=True)
+            sentry.exception()
+
+
+if __name__ == '__main__':
+    asyncio.run(main())
