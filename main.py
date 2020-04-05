@@ -33,6 +33,15 @@ except ModuleNotFoundError:
 
 
 async def setup_bot() -> master.Master:
+
+    # Overwrite +1,+2,+3,ü4 emoji with custom ones
+    pollutil.NUMBER_EMOJI_TO_VALUE = {
+        ':x1:': 1,
+        ':x2:': 2,
+        ':x3:': 3,
+        ':x4:': 4,
+    }
+
     loop = asyncio.get_event_loop()
 
     masterbot = master.Master(c.SERVER, c.BOTNAME, c.PASSWORD, loop=loop)
@@ -72,6 +81,7 @@ async def setup_bot() -> master.Master:
             whitelist=[c.MENSA_ROOM], commands=[etm],
             show_usage_on_unknown=False
         ))
+
     return masterbot
 
 
